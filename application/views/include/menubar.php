@@ -257,7 +257,18 @@ else if($functionmenu=='Paymentmode'){
     $statuscheck=checkprivilege($menuprivilegearray, 44, 3);
     $deletecheck=checkprivilege($menuprivilegearray, 44, 4);
 }
-
+else if($functionmenu=='ExpenseCategory'){
+    $addcheck=checkprivilege($menuprivilegearray, 45, 1);
+    $editcheck=checkprivilege($menuprivilegearray, 45, 2);
+    $statuscheck=checkprivilege($menuprivilegearray, 45, 3);
+    $deletecheck=checkprivilege($menuprivilegearray, 45, 4);
+}
+else if($functionmenu=='ExpenseEntry'){
+    $addcheck=checkprivilege($menuprivilegearray, 46, 1);
+    $editcheck=checkprivilege($menuprivilegearray, 46, 2);
+    $statuscheck=checkprivilege($menuprivilegearray, 46, 3);
+    $deletecheck=checkprivilege($menuprivilegearray, 46, 4);
+}
 function checkprivilege($arraymenu, $menuID, $type){
     foreach($arraymenu as $array){
         if($array->menuid==$menuID){
@@ -445,17 +456,32 @@ function checkprivilege($arraymenu, $menuID, $type){
                     <?php } ?>
                 </nav>
             </div>
-
-
             <?php } ?>
+
             <?php if(menucheck($menuprivilegearray, 27)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 text-dark" href="<?php echo base_url().'Tableno'; ?>">
                 <div class="nav-link-icon"><i class="fas fa-table"></i></div>
                 Table
             </a>
-          
-
             <?php } ?>
+
+            <?php if(menucheck($menuprivilegearray, 45)==1 | menucheck($menuprivilegearray, 46)==1){ ?>
+            <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapseexpenseinfo" aria-expanded="false" aria-controls="collapseexpenseinfo">
+                <div class="nav-link-icon"><i class="fas fa-shopping-basket"></i></div>
+                Expenses
+                <div class="sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+            </a>
+            <div class="collapse <?php if($controllermenu=="ExpenseCategory" || $controllermenu=="ExpenseEntry"){echo 'show';} ?>" id="collapseexpenseinfo" data-parent="#accordionSidenav">
+                <nav class="sidenav-menu-nested nav accordion" id="accordionSidenavPages">
+                    <?php if(menucheck($menuprivilegearray, 45)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'ExpenseCategory'; ?>">Expense Category</a>
+                    <?php } if(menucheck($menuprivilegearray, 46)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'ExpenseEntry'; ?>">Expense Entry</a>
+                    <?php } ?>
+                </nav>
+            </div>
+            <?php } ?>
+
             <?php if(menucheck($menuprivilegearray, 23)==1 | menucheck($menuprivilegearray, 24)==1 | menucheck($menuprivilegearray, 25)==1 | menucheck($menuprivilegearray, 26)==1| menucheck($menuprivilegearray, 28)==1 | menucheck($menuprivilegearray, 29)==1 | menucheck($menuprivilegearray, 30)==1 | menucheck($menuprivilegearray, 34)==1 | menucheck($menuprivilegearray, 35)==1 | menucheck($menuprivilegearray, 37)==1 | menucheck($menuprivilegearray, 38)==1 | menucheck($menuprivilegearray, 39)==1 | menucheck($menuprivilegearray, 41)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapsereport" aria-expanded="false" aria-controls="collapsereport">
                 <div class="nav-link-icon"><i class="fas fa-file"></i></div>
