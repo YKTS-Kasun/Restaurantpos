@@ -1,0 +1,23 @@
+{
+  //  Disable false CodeIgniter warnings
+  "intelephense.diagnostics.undefinedProperties": false,
+  "intelephense.diagnostics.undefinedMethods": false,
+  "intelephense.diagnostics.undefinedFunctions": false,
+  "intelephense.diagnostics.undefinedTypes": false,
+  "intelephense.diagnostics.undefinedConstants": false,
+  "intelephense.diagnostics.typeErrors": false, 
+
+  //  (Optional) Include autocomplete stubs if you install them
+  "intelephense.environment.includePaths": [
+    "vendor/kenjis/codeigniter3-autocomplete"
+  ],
+
+  //  Ignore framework folders (system/vendor)
+  "intelephense.files.exclude": [
+    "**/system/**",
+    "**/vendor/**"
+  ],
+
+  //  Match your environment’s PHP version
+  "intelephense.environment.phpVersion": "7.3"
+}

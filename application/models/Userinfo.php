@@ -428,6 +428,7 @@ class Userinfo extends CI_Model{
         $userID=$_SESSION['userid'];
         $recordID=$x;
         $type=$y;
+        $updatedatetime=date('Y-m-d H:i:s');
 
         if($type==1){
             $data = array(
