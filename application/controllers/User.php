@@ -4,13 +4,20 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 date_default_timezone_set('Asia/Colombo');
 
 class User extends CI_Controller {
-    public function Useraccount(){
-		$this->load->model('Userinfo');
-		$this->load->model('Commeninfo');
-		$result['usertype']=$this->Userinfo->Usertype();
-		$result['menuaccess']=$this->Commeninfo->Getmenuprivilege();
-		$this->load->view('useraccount', $result);
-	}
+   public function Useraccount(){
+    $this->load->model('Userinfo');
+    $this->load->model('Commeninfo');
+    $this->load->model('Location_model');
+
+    $result['usertype']   = $this->Userinfo->Usertype();
+    $result['menuaccess']= $this->Commeninfo->Getmenuprivilege();
+
+    // 🔥 THIS LINE WAS MISSING
+    $result['locations'] = $this->Location_model->get_active_locations();
+
+    $this->load->view('useraccount', $result);
+}
+
     public function Usertype(){
 		$this->load->model('Userinfo');
 		$this->load->model('Commeninfo');

@@ -23,36 +23,58 @@ class Welcome extends CI_Controller {
 		$this->load->view('login');
 	}
 	public function LoginUser(){
-		$this->load->model('Userinfo');
-        $result=$this->Userinfo->LoginUser();
-		// print_r($result);
-        if($result!=false){
-            $user_data=array(
-                'userid'=>$result->idtbl_res_user,
-                'name'=>$result->name,
-                'type'=>$result->idtbl_res_user_type,
-                'typename'=>$result->usertype,
-                'loggedin'=>true
-            );
 
-			$this->session->set_userdata($user_data);
-			
-			redirect('Welcome/Dashboard');            
-        }
-        else{
-            $this->session->set_flashdata('msg', 'Invalid Username or password');
-            redirect();
-        }
-	}
-	public function Logout(){
-        $this->session->unset_userdata('userid');
-        $this->session->unset_userdata('name');
-        $this->session->unset_userdata('type');
-        $this->session->unset_userdata('typename');
-        $this->session->unset_userdata('loggedin');
-        $this->cart->destroy();
-        redirect(base_url());
+    // 🔥 CLEAR OLD SESSION FIRST
+    $this->session->sess_destroy();
+    session_start();
+
+    $this->load->model('Userinfo');
+    $user = $this->Userinfo->LoginUser();
+
+    if ($user) {
+
+        $this->session->set_userdata([
+            'userid'        => $user->idtbl_res_user,
+            'name'          => $user->name,
+            'usertype'      => $user->tbl_res_user_type_idtbl_res_user_type,
+            'typename'      => $user->usertype,
+
+            // 🔥 CRITICAL
+            'location_id'   => $user->idtbl_location,
+            'location_type' => $user->location_type, // MUST be 'HO'
+            'location_name' => $user->location_name,
+
+            'loggedin'      => true
+        ]);
+
+        redirect('Welcome/Dashboard');
     }
+
+    $this->session->set_flashdata('msg','Invalid Username or Password');
+    redirect();
+}
+
+
+
+	public function Logout(){
+
+    $this->session->unset_userdata([
+        'userid',
+        'name',
+        'usertype',
+        'typename',
+        'location_id',
+        'location_type',
+        'location_name',
+        'loggedin'
+    ]);
+
+    $this->session->sess_destroy(); // ⭐ extra safety
+    $this->cart->destroy();
+
+    redirect(base_url());
+}
+
 	public function Dashboard(){
 		$this->load->model('Commeninfo');
 		$result['menuaccess']=$this->Commeninfo->Getmenuprivilege();

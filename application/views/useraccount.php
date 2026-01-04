@@ -46,6 +46,23 @@ include "include/topnavbar.php";
                                             <?php } ?>
                                         </select>
                                     </div>
+                                    <div class="form-group mb-1">
+    <label class="small font-weight-bold">Location *</label>
+    <select class="form-control form-control-sm"
+            name="location"
+            id="location"
+            required>
+        <option value="">Select Location</option>
+        <?php foreach ($locations as $loc) { ?>
+    <option value="<?= $loc->idtbl_location ?>">
+        <?= $loc->location_name ?>
+    </option>
+<?php } ?>
+
+    </select>
+</div>
+
+
                                     <div class="form-group mt-2 text-right">
                                         <button type="submit" id="submitBtn" class="btn btn-primary btn-sm px-4" <?php if($addcheck==0){echo 'disabled';} ?>><i class="far fa-save"></i>&nbsp;Add</button>
                                     </div>
@@ -62,6 +79,7 @@ include "include/topnavbar.php";
                                                 <th>NAME</th>
                                                 <th>USERNAME</th>
                                                 <th>TYPE</th>
+                                                <th>LOCATION</th>
                                                 <th class="text-right">&nbsp;</th>
                                             </tr>
                                         </thead>
@@ -109,6 +127,7 @@ include "include/topnavbar.php";
                 {
                     "data": "type"
                 },
+                { "data": "location" },
                 {
                     "targets": -1,
                     "className": 'text-right',
@@ -147,7 +166,8 @@ include "include/topnavbar.php";
                         $('#accountname').val(obj.name); 
                         $('#username').val(obj.username); 
                         $('#usertype').val(obj.type);  
-                        
+                        $('#location').val(obj.location);   // 🔥 IMPORTANT
+
                         $('#password').removeAttr("required");
 
                         $('#recordOption').val('2');

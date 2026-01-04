@@ -34,6 +34,8 @@ class Goodreceiveinfo extends CI_Model{
         echo json_encode($respond->result());
     }
     public function Goodreceiveinsertupdate(){
+        $locationID = $_SESSION['location_id']; // 🔴 REQUIRED
+
         $this->db->trans_begin();
 
         // Get the user ID from the session
@@ -63,10 +65,14 @@ class Goodreceiveinfo extends CI_Model{
             'approvestatus' => '0',
             'status' => '1',
             'insertdatetime' => $updatedatetime,
+
+            // 🔴 REQUIRED FKs
             'tbl_res_user_idtbl_res_user' => $userID,
             'tbl_supplier_idtbl_supplier' => $supplier,
-            'tbl_porder_idtbl_porder' => $porder
+            'tbl_porder_idtbl_porder' => $porder,
+            'idtbl_location' => $locationID   // 
         );
+
 
         // Insert the data into tbl_grn table
         $this->db->insert('tbl_grn', $data);
@@ -104,7 +110,28 @@ class Goodreceiveinfo extends CI_Model{
                 'tbl_res_material_info_idtbl_res_material_info' => $materialID
             );
 
-            $this->db->insert('tbl_stock', $stockData);
+            $sql = "
+INSERT INTO tbl_stock
+(batchno, qty, status, insertdatetime,
+ tbl_res_user_idtbl_res_user,
+ tbl_res_material_info_idtbl_res_material_info,
+ idtbl_location)
+VALUES (?, ?, 1, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+qty = qty + VALUES(qty),
+updatedatetime = NOW(),
+updateuser = VALUES(tbl_res_user_idtbl_res_user)
+";
+
+$this->db->query($sql, [
+    $batchno,
+    $qty,
+    $updatedatetime,
+    $userID,
+    $materialID,
+    $locationID
+]);
+
         }
 
         $this->db->trans_complete();

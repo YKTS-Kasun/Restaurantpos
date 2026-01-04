@@ -269,6 +269,18 @@ else if($functionmenu=='ExpenseEntry'){
     $statuscheck=checkprivilege($menuprivilegearray, 46, 3);
     $deletecheck=checkprivilege($menuprivilegearray, 46, 4);
 }
+else if($functionmenu=='StockTransfer'){
+    $addcheck    = checkprivilege($menuprivilegearray, 47, 1);
+    $editcheck   = checkprivilege($menuprivilegearray, 47, 2);
+    $statuscheck = checkprivilege($menuprivilegearray, 47, 3);
+    $deletecheck = checkprivilege($menuprivilegearray, 47, 4);
+}
+else if($functionmenu=='Location'){
+    $addcheck    = checkprivilege($menuprivilegearray, 48, 1);
+    $editcheck   = checkprivilege($menuprivilegearray, 48, 2);
+    $statuscheck = checkprivilege($menuprivilegearray, 48, 3);
+    $deletecheck = checkprivilege($menuprivilegearray, 48, 4);
+}
 function checkprivilege($arraymenu, $menuID, $type){
     foreach($arraymenu as $array){
         if($array->menuid==$menuID){
@@ -320,6 +332,14 @@ function checkprivilege($arraymenu, $menuID, $type){
                 Customer
             </a>
             <?php } ?>
+
+<?php if(menucheck($menuprivilegearray, 48)==1){ ?>
+<a class="nav-link p-0 px-3 py-1 text-dark"
+   href="<?php echo base_url().'Location'; ?>">
+   Location
+</a>
+<?php } ?>
+
             <?php if(menucheck($menuprivilegearray, 14)==1 | menucheck($menuprivilegearray, 12)==1 | menucheck($menuprivilegearray, 15)==1 | menucheck($menuprivilegearray, 21)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapsepordergrn" aria-expanded="false" aria-controls="collapsepordergrn">
                 <div class="nav-link-icon"><i class="fas fa-truck"></i></div>
@@ -481,6 +501,13 @@ function checkprivilege($arraymenu, $menuID, $type){
                 </nav>
             </div>
             <?php } ?>
+            
+<?php if(menucheck($menuprivilegearray, 47)==1){ ?>
+<a class="nav-link p-0 px-3 py-1 text-dark"
+   href="<?php echo base_url().'StockTransfer'; ?>">
+   Stock Transfer
+</a>
+<?php } ?>
 
             <?php if(menucheck($menuprivilegearray, 23)==1 | menucheck($menuprivilegearray, 24)==1 | menucheck($menuprivilegearray, 25)==1 | menucheck($menuprivilegearray, 26)==1| menucheck($menuprivilegearray, 28)==1 | menucheck($menuprivilegearray, 29)==1 | menucheck($menuprivilegearray, 30)==1 | menucheck($menuprivilegearray, 34)==1 | menucheck($menuprivilegearray, 35)==1 | menucheck($menuprivilegearray, 37)==1 | menucheck($menuprivilegearray, 38)==1 | menucheck($menuprivilegearray, 39)==1 | menucheck($menuprivilegearray, 41)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapsereport" aria-expanded="false" aria-controls="collapsereport">

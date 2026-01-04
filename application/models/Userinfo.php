@@ -1,49 +1,74 @@
 <?php
 class Userinfo extends CI_Model{
-    public function LoginUser(){
-        $username=$this->input->post('username');
-        $password=md5($this->input->post('password'));
-        
-        $this->db->select('*');
-        $this->db->from('tbl_res_user');
-        $this->db->join('tbl_res_user_type', 'tbl_res_user_type.idtbl_res_user_type = tbl_res_user.tbl_res_user_type_idtbl_res_user_type');
-        $this->db->where('tbl_res_user.username', $username);
-        $this->db->where('tbl_res_user.password', $password);
-        $this->db->where('tbl_res_user.status', 1);
-        
-        $respond=$this->db->get();
-        if($respond->num_rows()==1){            
-            return $respond->row(0);
-        }
-        else{
-            return false; 
-        }
+ public function LoginUser(){
+
+    $username = $this->input->post('username');
+    $password = md5($this->input->post('password'));
+
+    $this->db->select('
+        u.*,
+        ut.usertype,
+        l.location_type,
+        l.location_name
+    ');
+    $this->db->from('tbl_res_user u');
+    $this->db->join(
+        'tbl_res_user_type ut',
+        'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
+    );
+    $this->db->join(
+        'tbl_location l',
+        'l.idtbl_location = u.idtbl_location',
+        'left'
+    );
+    $this->db->where('u.username', $username);
+    $this->db->where('u.password', $password);
+    $this->db->where('u.status', 1);
+
+    $q = $this->db->get();
+
+    if ($q->num_rows() === 1) {
+        return $q->row();
     }
+
+    return false;
+}
+
+
     public function Usertype(){
         $this->db->select('idtbl_res_user_type, usertype');
         $this->db->from('tbl_res_user_type');
 
         return $respond=$this->db->get();
     }
+    
     public function Useraccountedit(){
-        $recordID=$this->input->post('recordID');
+    $recordID = $this->input->post('recordID');
 
-        $this->db->select('*');
-        $this->db->from('tbl_res_user');
-        $this->db->where('idtbl_res_user', $recordID);
-        $this->db->where('status', 1);
+    $q = $this->db
+        ->where('idtbl_res_user', $recordID)
+        ->get('tbl_res_user');
 
-        $respond=$this->db->get();
-
-        $obj=new stdClass();
-        $obj->id=$respond->row(0)->idtbl_res_user;
-        $obj->name=$respond->row(0)->name;
-        $obj->username=$respond->row(0)->username;
-        $obj->type=$respond->row(0)->tbl_res_user_type_idtbl_res_user_type;
-
-        echo json_encode($obj);
+    if ($q->num_rows() == 0) {
+        echo json_encode([]);
+        return;
     }
+
+    $row = $q->row();
+
+    $obj = new stdClass();
+    $obj->id       = $row->idtbl_res_user;
+    $obj->name     = $row->name;
+    $obj->username = $row->username;
+    $obj->type     = $row->tbl_res_user_type_idtbl_res_user_type;
+    $obj->location = $row->idtbl_location;
+
+    echo json_encode($obj);
+}
+
     public function Useraccountinsertupdate(){
+        $location = $this->input->post('location');
+
         $this->db->trans_begin();
 
         $userID=$_SESSION['userid'];
@@ -60,13 +85,15 @@ class Userinfo extends CI_Model{
 
         if($recordOption==1){
             $data = array(
-                'name'=>$accountname, 
-                'username'=>$username, 
-                'password'=>$password, 
-                'status'=>'1', 
-                'insertdatetime'=>$updatedatetime, 
-                'tbl_res_user_type_idtbl_res_user_type'=>$usertype
-            );
+    'name'      => $accountname,
+    'username'  => $username,
+    'password'  => $password,
+    'status'    => '1',
+    'insertdatetime' => $updatedatetime,
+    'tbl_res_user_type_idtbl_res_user_type' => $usertype,
+    'idtbl_location' => $location   // ✅ FIX
+);
+
 
             $this->db->insert('tbl_res_user', $data);
 
@@ -106,26 +133,30 @@ class Userinfo extends CI_Model{
         }
         else{
             if(!empty($this->input->post('password'))){
-                $data = array(
-                    'name'=>$accountname, 
-                    'username'=>$username, 
-                    'password'=>$password,
-                    'updateuser'=>$userID, 
-                    'updatedatetime'=>$updatedatetime, 
-                    'tbl_res_user_type_idtbl_res_user_type'=>$usertype
-                );
+               $data = array(
+    'name'=>$accountname,
+    'username'=>$username,
+    'password'=>$password,
+    'updateuser'=>$userID,
+    'updatedatetime'=>$updatedatetime,
+    'tbl_res_user_type_idtbl_res_user_type'=>$usertype,
+    'idtbl_location'=>$location   // ✅ FIX
+);
+
     
                 $this->db->where('idtbl_res_user', $recordID);
                 $this->db->update('tbl_res_user', $data);
             }
             else{
                 $data = array(
-                    'name'=>$accountname, 
-                    'username'=>$username, 
-                    'updateuser'=>$userID, 
-                    'updatedatetime'=>$updatedatetime, 
-                    'tbl_res_user_type_idtbl_res_user_type'=>$usertype
-                );
+    'name'=>$accountname,
+    'username'=>$username,
+    'updateuser'=>$userID,
+    'updatedatetime'=>$updatedatetime,
+    'tbl_res_user_type_idtbl_res_user_type'=>$usertype,
+    'idtbl_location'=>$location   // ✅ FIX
+);
+
     
                 $this->db->where('idtbl_res_user', $recordID);
                 $this->db->update('tbl_res_user', $data);
