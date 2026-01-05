@@ -331,10 +331,16 @@ scrollX: true,
 autoWidth: false,
 
 
-    ajax:{
-        url:"<?= base_url() ?>scripts/stocktransferlist.php",
-        type:"POST"
-    },
+   ajax:{
+    url:"<?= base_url() ?>scripts/stocktransferlist.php",
+    type:"POST",
+    data: function(d){
+        d.location_id   = "<?= $from_location_id ?>";
+        d.location_type = "<?= $from_location_type ?>";
+    }
+},
+
+
 
    order:[[1,'desc']], // transfer_date
 
@@ -398,32 +404,7 @@ autoWidth: false,
                     </button>
                 `;
 
-                /* ✔ APPROVE (Pending OR Rejected) */
-                if ((d.status === 'PENDING' || d.status === 'REJECTED')
-                    && <?= (int)$approvecheck ?> === 1) {
-
-                    btn += `
-                        <a href="<?= base_url() ?>StockTransfer/approve/${d.idtbl_stock_transfer}"
-                           onclick="return confirm('Approve this transfer?')"
-                           class="btn btn-success"
-                           title="Approve">
-                            <i class="fas fa-check"></i>
-                        </a>
-                    `;
-                }
-
-                /* ❌ REJECT (Pending OR Approved) */
-                if (d.status === 'PENDING' || d.status === 'APPROVED') {
-                    btn += `
-                        <a href="<?= base_url() ?>StockTransfer/reject/${d.idtbl_stock_transfer}"
-                           onclick="return confirm('Reject this transfer?')"
-                           class="btn btn-secondary"
-                           title="Reject">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    `;
-                }
-
+              
                 /* ✏ EDIT (only Pending) */
                 if (d.status === 'PENDING') {
                     btn += `

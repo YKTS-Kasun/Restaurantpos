@@ -333,13 +333,6 @@ function checkprivilege($arraymenu, $menuID, $type){
             </a>
             <?php } ?>
 
-<?php if(menucheck($menuprivilegearray, 48)==1){ ?>
-<a class="nav-link p-0 px-3 py-1 text-dark"
-   href="<?php echo base_url().'Location'; ?>">
-   Location
-</a>
-<?php } ?>
-
             <?php if(menucheck($menuprivilegearray, 14)==1 | menucheck($menuprivilegearray, 12)==1 | menucheck($menuprivilegearray, 15)==1 | menucheck($menuprivilegearray, 21)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapsepordergrn" aria-expanded="false" aria-controls="collapsepordergrn">
                 <div class="nav-link-icon"><i class="fas fa-truck"></i></div>
@@ -356,6 +349,8 @@ function checkprivilege($arraymenu, $menuID, $type){
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Goodreceive'; ?>">Good Receive Note</a>
                     <?php } if(menucheck($menuprivilegearray, 21)==1){ ?>
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Supplierpayment'; ?>">Supplier Payment</a>
+                    <?php } if(menucheck($menuprivilegearray, 47)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'StockTransfer'; ?>">Stock Transfer</a>
                     <?php } ?>
                 </nav>
             </div>
@@ -502,12 +497,6 @@ function checkprivilege($arraymenu, $menuID, $type){
             </div>
             <?php } ?>
             
-<?php if(menucheck($menuprivilegearray, 47)==1){ ?>
-<a class="nav-link p-0 px-3 py-1 text-dark"
-   href="<?php echo base_url().'StockTransfer'; ?>">
-   Stock Transfer
-</a>
-<?php } ?>
 
             <?php if(menucheck($menuprivilegearray, 23)==1 | menucheck($menuprivilegearray, 24)==1 | menucheck($menuprivilegearray, 25)==1 | menucheck($menuprivilegearray, 26)==1| menucheck($menuprivilegearray, 28)==1 | menucheck($menuprivilegearray, 29)==1 | menucheck($menuprivilegearray, 30)==1 | menucheck($menuprivilegearray, 34)==1 | menucheck($menuprivilegearray, 35)==1 | menucheck($menuprivilegearray, 37)==1 | menucheck($menuprivilegearray, 38)==1 | menucheck($menuprivilegearray, 39)==1 | menucheck($menuprivilegearray, 41)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapsereport" aria-expanded="false" aria-controls="collapsereport">
@@ -551,7 +540,7 @@ function checkprivilege($arraymenu, $menuID, $type){
 
           
             <?php } ?>
-            <?php if(menucheck($menuprivilegearray, 1)==1 | menucheck($menuprivilegearray, 2)==1 | menucheck($menuprivilegearray, 3)==1){ ?>
+            <?php if(menucheck($menuprivilegearray, 1)==1 | menucheck($menuprivilegearray, 2)==1 | menucheck($menuprivilegearray, 3)==1 | menucheck($menuprivilegearray, 48)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapseUser" aria-expanded="false" aria-controls="collapseUser">
                 <div class="nav-link-icon"><i class="fas fa-user"></i></div>
                 User Account
@@ -565,6 +554,8 @@ function checkprivilege($arraymenu, $menuID, $type){
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'User/Usertype'; ?>">Type</a>
                     <?php } if(menucheck($menuprivilegearray, 3)==1){ ?>
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'User/Userprivilege'; ?>">Privilege</a>
+                    <?php } if(menucheck($menuprivilegearray, 48)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Location'; ?>">Location</a>
                     <?php } ?>
                 </nav>
             </div>

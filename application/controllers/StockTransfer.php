@@ -184,8 +184,8 @@ public function approve($transfer_id = 0)
 
 
 
-public function view_modal() {
-
+public function view_modal()
+{
     if (!isset($_SESSION['userid'])) {
         show_error('Unauthorized');
     }
@@ -223,7 +223,45 @@ public function view_modal() {
     echo '
             </tbody>
         </table>';
+
+    /* ===============================
+       🔥 APPROVE / REJECT BUTTONS
+    =============================== */
+    if ($header->status !== 'REJECTED') {
+
+        // privilege + HO check
+        $isHO        = ($this->session->userdata('location_type') === 'HO');
+        $canApprove  = false;
+
+        $this->load->model('Commeninfo');
+        foreach ($this->Commeninfo->Getmenuprivilege() as $row) {
+            if ($row->menuid == 47 && (int)$row->remove === 1) {
+                $canApprove = true;
+                break;
+            }
+        }
+
+        if ($isHO && $canApprove) {
+            echo '
+            <div class="text-right mt-3">
+
+                <a href="'.base_url('StockTransfer/approve/'.$id).'"
+                   class="btn btn-success btn-sm"
+                   onclick="return confirm(\'Approve this transfer?\')">
+                    <i class="fas fa-check"></i> Approve
+                </a>
+
+                <a href="'.base_url('StockTransfer/reject/'.$id).'"
+                   class="btn btn-danger btn-sm ml-2"
+                   onclick="return confirm(\'Reject this transfer?\')">
+                    <i class="fas fa-times"></i> Reject
+                </a>
+
+            </div>';
+        }
+    }
 }
+
 
 
 public function delete($id = 0) {
@@ -257,10 +295,15 @@ public function delete($id = 0) {
     redirect('StockTransfer');
 }
 
-public function reject($id = 0) {
-
+public function reject($id = 0)
+{
     if (!isset($_SESSION['userid'])) {
         show_error('Unauthorized');
+    }
+
+    // HO only
+    if ($this->session->userdata('location_type') !== 'HO') {
+        show_error('Only Head Office can reject stock transfers');
     }
 
     $this->load->model('StockTransfer_model');
@@ -280,6 +323,7 @@ public function reject($id = 0) {
 
     redirect('StockTransfer');
 }
+
 
 
 
