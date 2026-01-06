@@ -329,4 +329,50 @@ public function approve_transfer($transfer_id)
         return $this->db->get('tbl_head_office')->row();
     }
 
+    public function update_transfer($transfer_id, $remark, $items)
+{
+    $this->db->trans_begin();
+
+    // Check transfer
+    $transfer = $this->db
+        ->where('idtbl_stock_transfer', $transfer_id)
+        ->where('status', 'PENDING')
+        ->get('tbl_stock_transfer')
+        ->row();
+
+    if (!$transfer) {
+        return false;
+    }
+
+    // Update header
+    $this->db->where('idtbl_stock_transfer', $transfer_id)
+        ->update('tbl_stock_transfer', [
+            'remark' => $remark
+        ]);
+
+    // Remove old items
+    $this->db->where('tbl_stock_transfer_id', $transfer_id)
+        ->delete('tbl_stock_transfer_detail');
+
+    // Insert new items
+    foreach ($items as $row) {
+        if ((int)$row['qty'] <= 0) continue;
+
+        $this->db->insert('tbl_stock_transfer_detail', [
+            'tbl_stock_transfer_id'    => $transfer_id,
+            'tbl_res_material_info_id' => $row['material_id'],
+            'qty'                      => $row['qty']
+        ]);
+    }
+
+    if ($this->db->trans_status() === FALSE) {
+        $this->db->trans_rollback();
+        return false;
+    }
+
+    $this->db->trans_commit();
+    return true;
+}
+
+
 }

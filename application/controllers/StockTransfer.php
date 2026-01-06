@@ -227,7 +227,7 @@ public function view_modal()
     /* ===============================
        🔥 APPROVE / REJECT BUTTONS
     =============================== */
-    if ($header->status !== 'REJECTED') {
+    if ($header->status === 'PENDING') {
 
         // privilege + HO check
         $isHO        = ($this->session->userdata('location_type') === 'HO');
@@ -347,5 +347,68 @@ public function reject($id = 0)
 
         $this->load->view('stock_transfer_view', $data);
     }
+
+    public function edit($id = 0)
+{
+    if (!isset($_SESSION['userid'])) {
+        show_error('Unauthorized');
+    }
+
+    $id = (int)$id;
+    if ($id === 0) {
+        show_error('Invalid transfer');
+    }
+
+    $this->load->model('StockTransfer_model');
+
+    $header = $this->StockTransfer_model->get_transfer_header($id);
+
+    // 🔐 Only pending transfers editable
+    if (!$header || $header->status !== 'PENDING') {
+        show_error('Only pending transfers can be edited');
+    }
+
+    $items = $this->StockTransfer_model->get_transfer_items($id);
+
+    echo json_encode([
+        'status' => 1,
+        'header' => $header,
+        'items'  => $items
+    ]);
+}
+
+public function update()
+{
+    if (!isset($_SESSION['userid'])) {
+        show_error('Unauthorized');
+    }
+
+    if ($this->input->method() !== 'post') {
+        show_error('Invalid request');
+    }
+
+    $this->load->model('StockTransfer_model');
+
+    $transfer_id = (int)$this->input->post('transfer_id');
+    $remark      = trim($this->input->post('remark'));
+    $items       = $this->input->post('items');
+
+    if ($transfer_id === 0 || empty($items)) {
+        echo json_encode(['status'=>0,'message'=>'Invalid data']);
+        return;
+    }
+
+    $result = $this->StockTransfer_model->update_transfer(
+        $transfer_id,
+        $remark,
+        $items
+    );
+
+    echo json_encode([
+        'status'  => $result ? 1 : 0,
+        'message' => $result ? 'Transfer updated successfully' : 'Update failed'
+    ]);
+}
+
 
 }

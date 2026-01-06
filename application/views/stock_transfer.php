@@ -313,11 +313,14 @@ include "include/topnavbar.php";
 
         </div>
     </div>
+    <input type="hidden" id="transfer_id" value="">
+        <input type="hidden" id="edit_row_index" value="">
 </div>
 
 <?php include "include/footerscripts.php"; ?>
 
 <script>
+    
 $(document).ready(function(){
 
     /* ===========================
@@ -408,11 +411,12 @@ autoWidth: false,
                 /* ✏ EDIT (only Pending) */
                 if (d.status === 'PENDING') {
                     btn += `
-                        <a href="<?= base_url() ?>StockTransfer/edit/${d.idtbl_stock_transfer}"
-                           class="btn btn-warning"
-                           title="Edit">
-                           <i class="fas fa-edit"></i>
-                        </a>
+                       <button class="btn btn-warning"
+        title="Edit"
+        onclick="editTransfer(${d.idtbl_stock_transfer})">
+    <i class="fas fa-edit"></i>
+</button>
+
                     `;
                 }
 
@@ -435,114 +439,166 @@ autoWidth: false,
     ]
 });
 
+$(document).on('click','.btnEditItem',function(){
+
+    let row = $(this).closest('tr');
+
+    let matID   = row.find('td:eq(0)').data('material-id');
+    let matText = row.find('td:eq(0)').text();
+    let qty     = row.find('td:eq(1)').text();
+    let index   = row.index();
+
+    // 🔥 ENSURE OPTION EXISTS IN SELECT
+    if ($('#material option[value="'+matID+'"]').length === 0) {
+        $('#material').append(
+            `<option value="${matID}" selected>${matText}</option>`
+        );
+    }
+
+    // set values
+    $('#material').val(matID);
+    $('#qty').val(qty);
+
+    // edit state
+    $('#edit_row_index').val(index);
+    $('#btnAdd').html('<i class="fas fa-sync"></i> Update');
+});
 
 
     /* ===========================
        ADD ITEM
     =========================== */
-    $('#btnAdd').click(function(){
+ $('#btnAdd').click(function(){
 
     let matText = $('#material option:selected').text();
     let matID   = $('#material').val();
-    let qty = parseFloat($('#qty').val());
-let stock = parseFloat($('#material option:selected').data('stock')) || 0;
-
+    let qty     = parseFloat($('#qty').val());
+    let stock   = parseFloat($('#material option:selected').data('stock')) || 0;
+    let editIndex = $('#edit_row_index').val();
 
     if(matID === ''){
         alert('Select material');
         return;
     }
 
-    // ✅ 2️⃣ QTY VALIDATION
     if(isNaN(qty) || qty <= 0){
         alert('Enter valid quantity');
         return;
     }
 
-    // ✅ 3️⃣ STOCK CHECK
     if(qty > stock){
         alert('Quantity exceeds available stock');
         return;
     }
 
-    // ❌ prevent duplicate material
-    let exists = false;
-    $('#itemTable tbody tr').each(function(){
-        if($(this).find('td:eq(2)').text() == matID){
-            exists = true;
-        }
-    });
+    /* ===============================
+       UPDATE EXISTING ROW
+    =============================== */
+    if(editIndex !== ''){
 
-    if(exists){
-        alert('This material already added');
-        return;
+        let row = $('#itemTable tbody tr').eq(editIndex);
+
+        row.find('td:eq(0)').text(matText);
+        row.find('td:eq(1)').text(qty);
+        row.find('td:eq(2)').text(matID);
+
+        // reset state
+        $('#edit_row_index').val('');
+        $('#btnAdd').html('<i class="fas fa-plus"></i> Add');
+
+    } 
+    /* ===============================
+       ADD NEW ROW
+    =============================== */
+    else {
+
+        // prevent duplicate
+        let exists = false;
+        $('#itemTable tbody tr').each(function(){
+            if($(this).find('td:eq(2)').text() == matID){
+                exists = true;
+            }
+        });
+
+        if(exists){
+            alert('This material already added');
+            return;
+        }
+
+        $('#itemTable tbody').append(`
+        <tr>
+            <td>${matText}</td>
+            <td class="text-center">${qty}</td>
+            <td class="d-none">${matID}</td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-warning btnEditItem">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger btnRemove">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+        `);
     }
 
-  $('#itemTable tbody').append(`
-<tr>
-    <td>${matText}</td>
-    <td class="text-center">${qty}</td>
-    <td class="d-none">${matID}</td>
-    <td class="text-center">
-        <button type="button" class="btn btn-sm btn-danger btnRemove">
-            <i class="fas fa-trash"></i>
-        </button>
-    </td>
-</tr>
-`);
-
-
+    // clear form
     $('#material').val('');
     $('#qty').val('');
 });
 
-
     /* ===========================
        SAVE TRANSFER
     =========================== */
-    $('#btnSave').click(function(){
+   $('#btnSave').click(function(){
 
-        let items=[];
-        $('#itemTable tbody tr').each(function(){
-            items.push({
-                material_id: $(this).find('td:eq(2)').text(),
-                qty: $(this).find('td:eq(1)').text()
-            });
+    let items=[];
+    $('#itemTable tbody tr').each(function(){
+        items.push({
+            material_id: $(this).find('td:eq(2)').text(),
+            qty: $(this).find('td:eq(1)').text()
         });
+    });
 
-        if(items.length==0){
-            alert('Add at least one item');
-            return;
-        }
-        if($('#to_location').val() === ''){
-    alert('Select destination location');
-    return;
-}
+    if(items.length === 0){
+        alert('Add at least one item');
+        return;
+    }
 
-$.post("<?= base_url() ?>StockTransfer/save",{
-    from_location_id: $('#from_location_id').val(),
-    from_location_type: $('#from_location_type').val(),
-    to_location: $('#to_location').val(), // e.g. BRANCH-3 or HEAD-1
-    remark: $('#remark').val(),
-    items: items
-},function(res){
-    try{
+    let transfer_id = $('#transfer_id').val();
+
+    let url = transfer_id
+        ? "<?= base_url() ?>StockTransfer/update"
+        : "<?= base_url() ?>StockTransfer/save";
+
+    $.post(url,{
+        transfer_id: transfer_id,
+        from_location_id: $('#from_location_id').val(),
+        from_location_type: $('#from_location_type').val(),
+        to_location: $('#to_location').val(),
+        remark: $('#remark').val(),
+        items: items
+    },function(res){
+
         let r = JSON.parse(res);
+
         if(r.status == 1){
+
             $('#transferModal').modal('hide');
-$('#itemTable tbody').empty();
-$('#remark').val('');
-$('#dataTable').DataTable().ajax.reload(null,false);
+
+            // reset form
+            $('#itemTable tbody').empty();
+            $('#remark').val('');
+            $('#transfer_id').val('');
+            $('#btnSave').html('<i class="fas fa-save"></i> Create Transfer');
+
+            $('#dataTable').DataTable().ajax.reload(null,false);
 
         }else{
             alert(r.message);
         }
-    }catch(e){
-        alert('Unexpected server error');
-    }
-});
-
     });
+});
 
 });
 
@@ -568,6 +624,63 @@ function viewTransfer(id){
 $(document).on('click','.btnRemove',function(){
     $(this).closest('tr').remove();
 });
+
+function editTransfer(id)
+{
+    $.get("<?= base_url() ?>StockTransfer/edit/" + id, function(res){
+
+        let r = JSON.parse(res);
+
+        if(r.status !== 1){
+            alert('This transfer cannot be edited');
+            return;
+        }
+
+        // 🔑 EDIT MODE
+        $('#transfer_id').val(id);
+
+        // 👉 TO LOCATION FIX
+        let toVal = r.header.to_location_type + '-' + r.header.to_location_id;
+        $('#to_location').val(toVal).trigger('change');
+
+        // remark
+        $('#remark').val(r.header.remark ?? '');
+
+        // reset form state
+        $('#material').val('');
+        $('#qty').val('');
+        $('#edit_row_index').val('');
+        $('#btnAdd').html('<i class="fas fa-plus"></i> Add');
+
+        // reset table
+        $('#itemTable tbody').empty();
+
+        // fill items (WITH EDIT + DELETE)
+        r.items.forEach(function(it){
+            $('#itemTable tbody').append(`
+                <tr>
+                    <td data-material-id="${it.material_id}">${it.material}</td>
+                    <td class="text-center">${it.qty}</td>
+                    <td class="d-none">${it.material_id}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-warning btnEditItem">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger btnRemove">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+
+        // change save button
+        $('#btnSave').html('<i class="fas fa-save"></i> Update Transfer');
+
+        // open modal
+        $('#transferModal').modal('show');
+    });
+}
 
 </script>
 
