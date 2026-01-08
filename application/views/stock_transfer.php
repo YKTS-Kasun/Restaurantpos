@@ -263,6 +263,13 @@ include "include/topnavbar.php";
 </select>
 
                             </div>
+<div class="form-group">
+    <label class="small font-weight-bold">Available Qty</label>
+    <input type="text"
+           class="form-control form-control-sm"
+           id="available_qty"
+           readonly>
+</div>
 
                             <div class="form-group">
                                 <label class="small font-weight-bold">Qty *</label>
@@ -464,6 +471,31 @@ $(document).on('click','.btnEditItem',function(){
     $('#btnAdd').html('<i class="fas fa-sync"></i> Update');
 });
 
+$('#material').on('change', function () {
+
+    let material_id = $(this).val();
+    let location_id = $('#from_location_id').val();
+
+    if(material_id === ''){
+        $('#available_qty').val('');
+        return;
+    }
+
+    $.post("<?= base_url() ?>StockTransfer/get_available_qty", {
+        material_id: material_id,
+        location_id: location_id
+    }, function (res) {
+
+        let r = JSON.parse(res);
+
+        if(r.status === 1){
+            $('#available_qty').val(r.qty);
+        }else{
+            $('#available_qty').val(0);
+        }
+
+    });
+});
 
     /* ===========================
        ADD ITEM
@@ -475,6 +507,12 @@ $(document).on('click','.btnEditItem',function(){
     let qty     = parseFloat($('#qty').val());
     let stock   = parseFloat($('#material option:selected').data('stock')) || 0;
     let editIndex = $('#edit_row_index').val();
+    let available = parseFloat($('#available_qty').val()) || 0;
+
+if(qty > available){
+    alert('Transfer qty exceeds available stock');
+    return;
+}
 
     if(matID === ''){
         alert('Select material');

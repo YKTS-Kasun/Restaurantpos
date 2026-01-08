@@ -281,6 +281,12 @@ else if($functionmenu=='Location'){
     $statuscheck = checkprivilege($menuprivilegearray, 48, 3);
     $deletecheck = checkprivilege($menuprivilegearray, 48, 4);
 }
+else if($functionmenu=='StockReceive'){
+    $addcheck    = checkprivilege($menuprivilegearray, 49, 1);
+    $editcheck   = checkprivilege($menuprivilegearray, 49, 2);
+    $statuscheck = checkprivilege($menuprivilegearray, 49, 3);
+    $deletecheck = checkprivilege($menuprivilegearray, 49, 4);
+}
 function checkprivilege($arraymenu, $menuID, $type){
     foreach($arraymenu as $array){
         if($array->menuid==$menuID){
@@ -351,6 +357,8 @@ function checkprivilege($arraymenu, $menuID, $type){
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Supplierpayment'; ?>">Supplier Payment</a>
                     <?php } if(menucheck($menuprivilegearray, 47)==1){ ?>
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'StockTransfer'; ?>">Stock Transfer</a>
+                    <?php } if(menucheck($menuprivilegearray, 49)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'StockReceive'; ?>">Stock Receive</a>
                     <?php } ?>
                 </nav>
             </div>

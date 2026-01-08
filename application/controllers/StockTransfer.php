@@ -410,5 +410,22 @@ public function update()
     ]);
 }
 
+public function get_available_qty()
+{
+    $material_id = (int)$this->input->post('material_id');
+    $location_id = (int)$this->input->post('location_id');
+
+    $this->load->model('StockTransfer_model');
+
+    $qty = $this->StockTransfer_model->get_stock_qty(
+        $material_id,
+        $location_id
+    );
+
+    echo json_encode([
+        'status' => 1,
+        'qty'    => $qty
+    ]);
+}
 
 }

@@ -141,48 +141,69 @@ public function approve_transfer($transfer_id)
         ->get('tbl_stock_transfer_detail')
         ->result();
 
-    foreach ($items as $item) {
+foreach ($items as $item) {
 
-        $material_id = (int)$item->tbl_res_material_info_id;
-        $qty         = (float)$item->qty;
+    $material_id = (int)$item->tbl_res_material_info_id;
+    $reqQty      = (float)$item->qty;
 
-        // 5️⃣ CHECK STOCK AT SOURCE
-        $stock = $this->db
-            ->where('idtbl_location', $transfer->from_location_id)
-            ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
-            ->get('tbl_stock')
-            ->row();
+    // 1️⃣ GET AVAILABLE STOCK ROWS (FIFO)
+    $stocks = $this->db
+        ->where('idtbl_location', $transfer->from_location_id)
+        ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
+        ->where('status', 1)
+        ->where('qty >', 0)
+        ->order_by('insertdatetime', 'ASC')
+        ->get('tbl_stock')
+        ->result();
 
-        if (!$stock || $stock->qty < $qty) {
-            $this->db->trans_rollback();
-            return [
-                'status'=>false,
-                'msg'=>'Insufficient stock'
-            ];
-        }
-
-        // 6️⃣ DEDUCT FROM SOURCE
-        $this->db->set('qty', 'qty - '.$qty, false)
-            ->where('idtbl_location', $transfer->from_location_id)
-            ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
-            ->update('tbl_stock');
-
-        // 7️⃣ ADD TO DESTINATION
-        $this->db->query("
-            INSERT INTO tbl_stock
-            (batchno, qty, status, insertdatetime,
-             tbl_res_user_idtbl_res_user,
-             tbl_res_material_info_idtbl_res_material_info,
-             idtbl_location)
-            VALUES ('TRANSFER', ?, 1, NOW(), ?, ?, ?)
-            ON DUPLICATE KEY UPDATE qty = qty + VALUES(qty)
-        ", [
-            $qty,
-            $_SESSION['userid'],
-            $material_id,
-            $transfer->to_location_id
-        ]);
+    $available = 0;
+    foreach ($stocks as $s) {
+        $available += $s->qty;
     }
+
+    if ($available < $reqQty) {
+        $this->db->trans_rollback();
+        return [
+            'status' => false,
+            'msg'    => 'Insufficient stock'
+        ];
+    }
+
+    // 2️⃣ DEDUCT FIFO
+    $balance = $reqQty;
+
+    foreach ($stocks as $s) {
+
+        if ($balance <= 0) break;
+
+        if ($s->qty <= $balance) {
+            // consume whole row
+            $this->db->where('idtbl_stock', $s->idtbl_stock)
+                     ->update('tbl_stock', ['qty' => 0]);
+
+            $balance -= $s->qty;
+        } else {
+            // partial consume
+            $this->db->set('qty', 'qty - '.$balance, false)
+                     ->where('idtbl_stock', $s->idtbl_stock)
+                     ->update('tbl_stock');
+
+            $balance = 0;
+        }
+    }
+
+    // 3️⃣ ADD TO DESTINATION (single row)
+    $this->db->insert('tbl_stock', [
+        'batchno' => 'TRANSFER',
+        'qty'     => $reqQty,
+        'status'  => 1,
+        'insertdatetime' => date('Y-m-d H:i:s'),
+        'tbl_res_user_idtbl_res_user' => $_SESSION['userid'],
+        'tbl_res_material_info_idtbl_res_material_info' => $material_id,
+        'idtbl_location' => $transfer->to_location_id
+    ]);
+}
+
 
     // 8️⃣ UPDATE TRANSFER STATUS
     $this->db->where('idtbl_stock_transfer', $transfer_id)
@@ -374,5 +395,17 @@ public function approve_transfer($transfer_id)
     return true;
 }
 
+public function get_stock_qty($material_id, $location_id)
+{
+    $row = $this->db
+        ->select('SUM(qty) AS qty')
+        ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
+        ->where('idtbl_location', $location_id)
+        ->where('status', 1)
+        ->get('tbl_stock')
+        ->row();
+
+    return $row && $row->qty ? (float)$row->qty : 0;
+}
 
 }
