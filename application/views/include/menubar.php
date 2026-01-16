@@ -287,6 +287,12 @@ else if($functionmenu=='StockReceive'){
     $statuscheck = checkprivilege($menuprivilegearray, 49, 3);
     $deletecheck = checkprivilege($menuprivilegearray, 49, 4);
 }
+else if($functionmenu=='Company'){
+    $addcheck    = checkprivilege($menuprivilegearray, 50, 1);
+    $editcheck   = checkprivilege($menuprivilegearray, 50, 2);
+    $statuscheck = checkprivilege($menuprivilegearray, 50, 3);
+    $deletecheck = checkprivilege($menuprivilegearray, 50, 4);
+}
 function checkprivilege($arraymenu, $menuID, $type){
     foreach($arraymenu as $array){
         if($array->menuid==$menuID){
@@ -548,13 +554,13 @@ function checkprivilege($arraymenu, $menuID, $type){
 
           
             <?php } ?>
-            <?php if(menucheck($menuprivilegearray, 1)==1 | menucheck($menuprivilegearray, 2)==1 | menucheck($menuprivilegearray, 3)==1 | menucheck($menuprivilegearray, 48)==1){ ?>
+            <?php if(menucheck($menuprivilegearray, 1)==1 | menucheck($menuprivilegearray, 2)==1 | menucheck($menuprivilegearray, 3)==1 | menucheck($menuprivilegearray, 50)==1){ ?>
             <a class="nav-link p-0 px-3 py-2 collapsed text-dark" href="javascript:void(0);" data-toggle="collapse" data-target="#collapseUser" aria-expanded="false" aria-controls="collapseUser">
                 <div class="nav-link-icon"><i class="fas fa-user"></i></div>
                 User Account
                 <div class="sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
             </a>
-            <div class="collapse <?php if($functionmenu=="Useraccount" | $functionmenu=="Usertype" | $functionmenu=="Userprivilege"){echo 'show';} ?>" id="collapseUser" data-parent="#accordionSidenav">
+            <div class="collapse <?php if($functionmenu=="Useraccount" | $functionmenu=="Usertype" | $functionmenu=="Userprivilege" | $functionmenu=="Company"){echo 'show';} ?>" id="collapseUser" data-parent="#accordionSidenav">
                 <nav class="sidenav-menu-nested nav accordion" id="accordionSidenavPages">
                     <?php if(menucheck($menuprivilegearray, 1)==1){ ?>
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'User/Useraccount'; ?>">User Account</a>
@@ -562,8 +568,8 @@ function checkprivilege($arraymenu, $menuID, $type){
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'User/Usertype'; ?>">Type</a>
                     <?php } if(menucheck($menuprivilegearray, 3)==1){ ?>
                     <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'User/Userprivilege'; ?>">Privilege</a>
-                    <?php } if(menucheck($menuprivilegearray, 48)==1){ ?>
-                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Location'; ?>">Location</a>
+                    <?php } if(menucheck($menuprivilegearray, 50)==1){ ?>
+                    <a class="nav-link p-0 px-3 py-1 text-dark" href="<?php echo base_url().'Company'; ?>">Company Master</a>
                     <?php } ?>
                 </nav>
             </div>

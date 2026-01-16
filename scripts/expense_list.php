@@ -1,30 +1,40 @@
 <?php
+session_start();
 
 $table = 'tbl_expense';
 $primaryKey = 'idtbl_expense';
 
+if (!isset($_SESSION['idtbl_location'])) {
+    die(json_encode([
+        "data" => [],
+        "error" => "Unauthorized"
+    ]));
+}
+
+$idtbl_location = (int) $_SESSION['idtbl_location'];
+
 $columns = array(
-    array( 
+    array(
         'db'    => 'e.expdate',
         'dt'    => 'expdate',
         'field' => 'expdate'
     ),
-    array( 
+    array(
         'db'    => 'c.category',
         'dt'    => 'category',
         'field' => 'category'
     ),
-    array( 
+    array(
         'db'    => 'e.description',
         'dt'    => 'description',
         'field' => 'description'
     ),
-    array( 
+    array(
         'db'    => 'e.amount',
         'dt'    => 'amount',
         'field' => 'amount'
     ),
-    array( 
+    array(
         'db'    => 'e.idtbl_expense',
         'dt'    => 'id',
         'field' => 'idtbl_expense'
@@ -44,11 +54,11 @@ require('ssp.customized.class.php');
 
 $joinQuery = "
     FROM tbl_expense AS e
-    JOIN tbl_expense_category AS c 
+    JOIN tbl_expense_category AS c
       ON c.idtbl_expense_category = e.categoryid
 ";
 
-$extraWhere = "e.status = 1";
+$extraWhere = "e.status = 1 AND e.idtbl_location = ".$idtbl_location;
 
 echo json_encode(
     SSP::simple(

@@ -32,14 +32,14 @@ class StockTransfer extends CI_Controller {
 
     $data['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
 
-    // approve permission
-    $data['approvecheck'] = 0;
-    foreach ($data['menuaccess'] as $row) {
-        if ($row->menuid == 47 && (int)$row->remove === 1) {
-            $data['approvecheck'] = 1;
-            break;
-        }
+// approve permission (STATUSCHANGE = APPROVE)
+$data['approvecheck'] = 0;
+foreach ($data['menuaccess'] as $row) {
+    if ($row->menuid == 47 && (int)$row->statuschange === 1) {
+        $data['approvecheck'] = 1;
+        break;
     }
+}
 
     $data['branchlist'] = $this->StockTransfer_model->get_branches();
 
@@ -133,13 +133,13 @@ public function approve($transfer_id = 0)
         show_error('Invalid Transfer');
     }
 
-    // 🔐 privilege check (DELETE = APPROVE)
+    // 🔐 APPROVE PRIVILEGE CHECK (statuschange ONLY)
     $this->load->model('Commeninfo');
     $menuprivilegearray = $this->Commeninfo->Getmenuprivilege();
 
     $approvecheck = 0;
     foreach ($menuprivilegearray as $row) {
-        if ($row->menuid == 47 && (int)$row->remove === 1) {
+        if ($row->menuid == 47 && (int)$row->statuschange === 1) {
             $approvecheck = 1;
             break;
         }
@@ -149,12 +149,7 @@ public function approve($transfer_id = 0)
         show_error('Permission denied');
     }
 
-    // ✅ CORRECT & SAFE HO CHECK
-    if ($this->session->userdata('location_type') !== 'HO') {
-        show_error('Only Head Office can approve stock transfers');
-    }
-
-    // ✅ approve logic
+    // ✅ APPROVE (NO LOCATION CHECK)
     $this->load->model('StockTransfer_model');
     $result = $this->StockTransfer_model->approve_transfer($transfer_id);
 
@@ -180,7 +175,6 @@ public function approve($transfer_id = 0)
 
     redirect('StockTransfer');
 }
-
 
 
 
@@ -230,18 +224,18 @@ public function view_modal()
     if ($header->status === 'PENDING') {
 
         // privilege + HO check
-        $isHO        = ($this->session->userdata('location_type') === 'HO');
-        $canApprove  = false;
+       $canApprove = false;
 
-        $this->load->model('Commeninfo');
-        foreach ($this->Commeninfo->Getmenuprivilege() as $row) {
-            if ($row->menuid == 47 && (int)$row->remove === 1) {
-                $canApprove = true;
-                break;
-            }
-        }
+$this->load->model('Commeninfo');
+foreach ($this->Commeninfo->Getmenuprivilege() as $row) {
+    if ($row->menuid == 47 && (int)$row->statuschange === 1) {
+        $canApprove = true;
+        break;
+    }
+}
 
-        if ($isHO && $canApprove) {
+if ($canApprove) {
+
             echo '
             <div class="text-right mt-3">
 
@@ -301,10 +295,21 @@ public function reject($id = 0)
         show_error('Unauthorized');
     }
 
-    // HO only
-    if ($this->session->userdata('location_type') !== 'HO') {
-        show_error('Only Head Office can reject stock transfers');
+   // privilege check (statuschange)
+$this->load->model('Commeninfo');
+$canReject = 0;
+
+foreach ($this->Commeninfo->Getmenuprivilege() as $row) {
+    if ($row->menuid == 47 && (int)$row->statuschange === 1) {
+        $canReject = 1;
+        break;
     }
+}
+
+if ($canReject !== 1) {
+    show_error('Permission denied');
+}
+
 
     $this->load->model('StockTransfer_model');
 
@@ -323,9 +328,6 @@ public function reject($id = 0)
 
     redirect('StockTransfer');
 }
-
-
-
 
 
     /* =====================================================
@@ -427,5 +429,33 @@ public function get_available_qty()
         'qty'    => $qty
     ]);
 }
+public function dispatch_report_pdf($transfer_id)
+{
+    $this->load->model('StockTransfer_model');
+    $this->load->library('Dpdf');
+
+    $data['header'] = $this->StockTransfer_model->get_transfer_header($transfer_id);
+    $data['items']  = $this->StockTransfer_model->get_transfer_items($transfer_id);
+
+    if (empty($data['header'])) {
+        show_404();
+    }
+
+    // Load view as HTML
+    $html = $this->load->view(
+        'dispatch_report_pdf',
+        $data,
+        true
+    );
+
+    // domPDF flow
+    $this->dpdf->loadHtml($html);
+    $this->dpdf->setPaper('A4', 'portrait');
+    $this->dpdf->render();
+
+    $filename = 'Dispatch_Report_' . $data['header']->transfer_no . '.pdf';
+    $this->dpdf->stream($filename, ['Attachment' => false]);
+}
+
 
 }

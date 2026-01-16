@@ -58,7 +58,7 @@ LEFT JOIN tbl_location lt ON lt.idtbl_location = st.to_location_id
 ";
 
 
-$extraWhere = "st.status = 'APPROVED'";
+$extraWhere = "st.status IN ('APPROVED','RECEIVED')";
 
 /* Branch → only received transfers */
 if ($user_location_type === 'BRANCH') {

@@ -19,33 +19,92 @@ class Welcome extends CI_Controller {
 	 * @see https://codeigniter.com/userguide3/general/urls.html
 	 */
 	public function index()
-	{
-		$this->load->view('login');
-	}
-	public function LoginUser(){
+{
+    $data['companylist'] = $this->db
+        ->where('status', 1)
+        ->get('tbl_company')
+        ->result();
 
-    // 🔥 CLEAR OLD SESSION FIRST
-    $this->session->sess_destroy();
-    session_start();
+    $this->load->view('login', $data);
+}
 
-    $this->load->model('Userinfo');
-    $user = $this->Userinfo->LoginUser();
+public function LoginUser()
+{
+    // clear old session
+  $this->session->unset_userdata([
+    'userid','name','usertype','company_id','branch_id','loggedin'
+]);
+
+
+
+    $username   = $this->input->post('username');
+    $password   = $this->input->post('password');
+    $company_id = $this->input->post('company_id');
+    $branch_id  = $this->input->post('branch_id');
+
+$user = $this->db
+    ->select('
+        u.*,
+        ut.usertype,
+        c.company,
+        cb.branch
+    ')
+    ->from('tbl_res_user u')
+    ->join('tbl_res_user_type ut',
+        'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
+    )
+    ->join('tbl_company c',
+        'c.idtbl_company = u.tbl_company_idtbl_company'
+    )
+    ->join('tbl_company_branch cb',
+        'cb.idtbl_company_branch = u.tbl_company_branch_idtbl_company_branch',
+        'left'
+    )
+    ->where('u.username', $username)
+    ->where('u.password', md5($password))
+    ->where('u.status', 1)
+    ->get()
+    ->row();
+
 
     if ($user) {
 
-        $this->session->set_userdata([
-            'userid'        => $user->idtbl_res_user,
-            'name'          => $user->name,
-            'usertype'      => $user->tbl_res_user_type_idtbl_res_user_type,
-            'typename'      => $user->usertype,
+        // 🔐 company validation
+        if ($user->tbl_company_idtbl_company != $company_id) {
+            $this->session->set_flashdata('msg','Invalid Company');
+            redirect();
+        }
+if (!empty($branch_id)) {
+ 
+    $branch = $this->db
+        ->where('idtbl_company_branch', $branch_id)
+        ->where('tbl_company_idtbl_company', $company_id)
+        ->where('status', 1)
+        ->get('tbl_company_branch')
+        ->row();
 
-            // 🔥 CRITICAL
-            'location_id'   => $user->idtbl_location,
-            'location_type' => $user->location_type, // MUST be 'HO'
-            'location_name' => $user->location_name,
+    if (!$branch) {
+        $this->session->set_flashdata('msg','Invalid Branch');
+        redirect();
+    }
+}
 
-            'loggedin'      => true
-        ]);
+$this->session->set_userdata([
+    'userid'   => $user->idtbl_res_user,
+    'name'     => $user->name,
+    'usertype' => $user->tbl_res_user_type_idtbl_res_user_type,
+    'typename' => $user->usertype,
+
+    'company_id'   => $user->tbl_company_idtbl_company,
+    'company_name' => $user->company,
+
+    'branch_id'    => $user->tbl_company_branch_idtbl_company_branch,
+    'branch_name'  => $user->branch,
+
+    'loggedin' => true
+]);
+
+
 
         redirect('Welcome/Dashboard');
     }
@@ -55,25 +114,40 @@ class Welcome extends CI_Controller {
 }
 
 
+public function getBranchesByCompany()
+{
+    $company_id = $this->input->post('company_id');
 
-	public function Logout(){
+    $branches = $this->db
+        ->where('tbl_company_idtbl_company', $company_id)
+        ->where('status', 1)
+        ->get('tbl_company_branch')
+        ->result();
 
+    echo '<option value="">Select</option>';
+    foreach ($branches as $b) {
+        echo '<option value="'.$b->idtbl_company_branch.'">'.$b->branch.'</option>';
+    }
+}
+
+
+public function Logout()
+{
     $this->session->unset_userdata([
         'userid',
         'name',
         'usertype',
-        'typename',
-        'location_id',
-        'location_type',
-        'location_name',
+        'company_id',
+        'branch_id',
         'loggedin'
     ]);
 
-    $this->session->sess_destroy(); // ⭐ extra safety
+    $this->session->sess_destroy();
     $this->cart->destroy();
 
     redirect(base_url());
 }
+
 
 	public function Dashboard(){
 		$this->load->model('Commeninfo');

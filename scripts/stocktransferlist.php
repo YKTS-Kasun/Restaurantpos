@@ -45,7 +45,7 @@ LEFT JOIN tbl_location lt ON lt.idtbl_location = st.to_location_id
 /* ==============================
    WHERE BASE
 ============================== */
-$extraWhere = "st.status IN ('PENDING','APPROVED','REJECTED')";
+$extraWhere = "st.status IN ('PENDING','APPROVED','REJECTED','RECEIVED')";
 
 /* ==============================
    🔐 ACCESS RULES

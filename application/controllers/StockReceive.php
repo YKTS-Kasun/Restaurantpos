@@ -15,14 +15,24 @@ class StockReceive extends CI_Controller {
     /* =====================================================
      * MAIN VIEW
      * ===================================================== */
-    public function index()
-    {
-        $this->load->model('Commeninfo');
-    $this->load->model('StockTransfer_model');
+   public function index()
+{
+    $this->load->model('Commeninfo');
 
     $data['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
-        $this->load->view('stock_receive' , $data);
+
+    // 🔐 RECEIVE PRIVILEGE CHECK (menu 49, statuschange)
+    $data['receivecheck'] = 0;
+    foreach ($data['menuaccess'] as $row) {
+        if ($row->menuid == 49 && (int)$row->statuschange === 1) {
+            $data['receivecheck'] = 1;
+            break;
+        }
     }
+
+    $this->load->view('stock_receive', $data);
+}
+
 
     /* =====================================================
      * VIEW RECEIVE MODAL
@@ -70,22 +80,45 @@ class StockReceive extends CI_Controller {
     /* =====================================================
      * CONFIRM RECEIVE
      * ===================================================== */
-    public function receive($transfer_id = 0)
-    {
-        if($transfer_id == 0){
-            echo json_encode(['status'=>0,'message'=>'Invalid transfer']);
-            return;
-        }
+public function receive($transfer_id = 0)
+{
+    if ($transfer_id == 0) {
+        echo json_encode(['status'=>0,'message'=>'Invalid transfer']);
+        return;
+    }
 
-        $result = $this->StockReceive_model->receive_transfer($transfer_id);
+    // 🔐 RECEIVE PRIVILEGE CHECK (menu 49, statuschange)
+    $this->load->model('Commeninfo');
+    $menuprivilegearray = $this->Commeninfo->Getmenuprivilege();
 
-        if($result){
-            echo json_encode(['status'=>1]);
-        }else{
-            echo json_encode([
-                'status'=>0,
-                'message'=>'Unable to receive stock'
-            ]);
+    $receivecheck = 0;
+    foreach ($menuprivilegearray as $row) {
+        if ($row->menuid == 49 && (int)$row->statuschange === 1) {
+            $receivecheck = 1;
+            break;
         }
     }
+
+    if ($receivecheck !== 1) {
+        echo json_encode([
+            'status'  => 0,
+            'message' => 'Permission denied'
+        ]);
+        return;
+    }
+
+    // ✅ RECEIVE LOGIC (NO LOCATION CHECK)
+    $result = $this->StockReceive_model->receive_transfer($transfer_id);
+
+    if ($result) {
+        echo json_encode(['status'=>1]);
+    } else {
+        echo json_encode([
+            'status'=>0,
+            'message'=>'Unable to receive stock'
+        ]);
+    }
+}
+
+    
 }

@@ -26,7 +26,17 @@ class ExpenseEntry extends CI_Controller {
     // Data
     $result['categories'] = $this->expense->get_categories(true);
     //$result['expenses']   = $this->expense->get_all_expenses($filters);
-    $result['expenses'] = $this->expense->get_daywise_expenses($filters['date_from'], $filters['date_to']);
+$location_type = $this->session->userdata('location_type'); // HO / BRANCH
+$idtbl_location = $this->session->userdata('idtbl_location');
+
+$result['expenses'] = $this->expense->get_daywise_expenses(
+    $filters['date_from'],
+    $filters['date_to'],
+    $location_type,
+    $idtbl_location
+);
+
+
 
     // DEFAULT: form empty (add)
     $result['edit_mode'] = false;
@@ -47,13 +57,15 @@ class ExpenseEntry extends CI_Controller {
 
         $id = $this->input->post('id');
 
-        $data = [
-            'categoryid'  => $this->input->post('categoryid'),
+$idtbl_location = $this->session->userdata('idtbl_location');
 
-            'description' => $this->input->post('description'),
-            'amount'      => $this->input->post('amount'),
-            'expdate'     => $this->input->post('expdate'),
-        ];
+$data = [
+    'categoryid'     => $this->input->post('categoryid'),
+    'description'    => $this->input->post('description'),
+    'amount'         => $this->input->post('amount'),
+    'expdate'        => $this->input->post('expdate'),
+    'idtbl_location' => $idtbl_location
+];
 
         // ADD NEW
         if ($id == "" || $id == null)
@@ -81,7 +93,10 @@ class ExpenseEntry extends CI_Controller {
         $result['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
 
         // Fetch record (manual only)
-        $exp = $this->expense->get_manual_expense($id);
+$idtbl_location = $this->session->userdata('idtbl_location');
+
+$exp = $this->expense->get_manual_expense($id, $idtbl_location);
+
 
         if (!$exp){
             $this->session->set_flashdata('msg', 'Invalid expense record');
@@ -102,7 +117,14 @@ class ExpenseEntry extends CI_Controller {
 
         // Load categories & list
         $result['categories'] = $this->expense->get_categories(true);
-        $result['expenses']   = $this->expense->get_all_expenses($filters);
+        $idtbl_location = $this->session->userdata('idtbl_location');
+
+$result['expenses'] = $this->expense->get_daywise_expenses(
+    $filters['date_from'],
+    $filters['date_to'],
+    $idtbl_location
+);
+
 
         // FORM in Edit Mode
         $result['edit_mode'] = true;
@@ -119,7 +141,10 @@ class ExpenseEntry extends CI_Controller {
         $this->load->model('Commeninfo');
 
         $menu = $this->Commeninfo->Getmenuprivilege();
-        $this->expense->soft_delete_manual_expense($id);
+        $idtbl_location = $this->session->userdata('idtbl_location');
+
+$this->expense->soft_delete_manual_expense($id, $idtbl_location);
+
         $this->session->set_flashdata('msg', 'Expense deleted');
         redirect('ExpenseEntry');
     }
@@ -130,7 +155,10 @@ public function pdf($date)
     $this->load->library('Dpdf');   // loads as $this->dpdf
 
     $data['date']  = $date;
-    $data['items'] = $this->expense->get_day_expenses($date);
+$idtbl_location = $this->session->userdata('idtbl_location');
+
+$data['items'] = $this->expense->get_day_expenses($date, $idtbl_location);
+
 
     if (empty($data['items'])) {
         echo "No expenses found for this date.";
@@ -158,7 +186,15 @@ public function pdf_range()
     $data['to']   = $to;
     $data['cat']  = $cat;
 
-    $data['items'] = $this->expense->get_range_expenses($from, $to, $cat);
+$idtbl_location = $this->session->userdata('idtbl_location');
+
+$data['items'] = $this->expense->get_range_expenses(
+    $from,
+    $to,
+    $cat,
+    $idtbl_location
+);
+
 
     if(empty($data['items'])){
         echo "No records found!";

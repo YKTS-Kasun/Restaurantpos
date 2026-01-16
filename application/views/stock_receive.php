@@ -49,7 +49,7 @@ include "include/topnavbar.php";
                                         <th>Date</th>
                                         <th>Transfer No</th>
                                         <th>From</th>
-                                        <th>Items</th>
+                                        <th>Status</th>
                                         <th class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -120,25 +120,52 @@ $('#dataTable').DataTable({
         },
         { data:'transfer_date' },
         { data:'transfer_no' },
-        { data:'from_loc' },
-        {
-            data:null,
-            render:function(d){
-                return '<span class="badge badge-info">Items</span>';
-            }
-        },
-        {
-            data:null,
-            orderable:false,
-            className:'text-center',
-            render:function(d){
-                return `
-                    <button class="btn btn-sm btn-success"
-                            onclick="openReceive(${d.idtbl_stock_transfer})">
-                        <i class="fas fa-download"></i> Receive
-                    </button>`;
-            }
+{ data:'from_loc' },
+
+/* STATUS */
+{
+    data:'status',
+    className:'text-center',
+    render:function(d){
+        if(d === 'APPROVED'){
+            return '<span class="badge badge-warning">Pending</span>';
         }
+        if(d === 'RECEIVED'){
+            return '<span class="badge badge-success">Received</span>';
+        }
+        return d;
+    }
+},
+
+/* ACTION */
+{
+    data:null,
+    orderable:false,
+    className:'text-center',
+    render:function(d){
+
+        /* Pending → Receive */
+        if(d.status === 'APPROVED'){
+            return `
+                <button class="btn btn-sm btn-success"
+                        onclick="openReceive(${d.idtbl_stock_transfer})">
+                    <i class="fas fa-download"></i> Receive
+                </button>`;
+        }
+
+        /* Received → View */
+        if(d.status === 'RECEIVED'){
+            return `
+                <button class="btn btn-sm btn-info"
+                        onclick="viewReceive(${d.idtbl_stock_transfer})">
+                    <i class="fas fa-eye"></i> View
+                </button>`;
+        }
+
+        return '-';
+    }
+}
+
     ]
 });
 
@@ -151,6 +178,7 @@ $('#dataTable').DataTable({
 function openReceive(id)
 {
     receiveTransferID = id;
+    $('#btnConfirmReceive').show(); // 🔥 show confirm
     $('#receiveModal').modal('show');
     $('#receiveModalContent').html('Loading...');
 
@@ -158,6 +186,7 @@ function openReceive(id)
         $('#receiveModalContent').html(res);
     });
 }
+
 
 
 /* ===============================
@@ -180,6 +209,20 @@ $('#btnConfirmReceive').click(function(){
 
     });
 });
+
+function viewReceive(id)
+{
+    receiveTransferID = 0; // 🔥 disable confirm
+    $('#receiveModal').modal('show');
+    $('#receiveModalContent').html('Loading...');
+
+    $.post("<?= base_url() ?>StockReceive/view_modal",{id:id},function(res){
+        $('#receiveModalContent').html(res);
+        $('#btnConfirmReceive').hide(); // 🔥 hide confirm
+    });
+}
+
+
 </script>
 
 <?php include "include/footer.php"; ?>

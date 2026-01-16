@@ -46,19 +46,29 @@ include "include/topnavbar.php";
                                             <?php } ?>
                                         </select>
                                     </div>
-                                    <div class="form-group mb-1">
-    <label class="small font-weight-bold">Location *</label>
-    <select class="form-control form-control-sm"
-            name="location"
-            id="location"
-            required>
-        <option value="">Select Location</option>
-        <?php foreach ($locations as $loc) { ?>
-    <option value="<?= $loc->idtbl_location ?>">
-        <?= $loc->location_name ?>
-    </option>
-<?php } ?>
 
+   <div class="form-group mb-1">
+    <label class="small font-weight-bold">Company *</label>
+    <select class="form-control form-control-sm"
+            name="company_id"
+            id="company_id"
+            required>
+        <option value="">Select Company</option>
+        <?php foreach ($companylist as $c) { ?>
+            <option value="<?= $c->idtbl_company ?>">
+                <?= $c->company ?>
+            </option>
+        <?php } ?>
+    </select>
+</div>
+
+<div class="form-group mb-1">
+    <label class="small font-weight-bold">Company Branch *</label>
+    <select class="form-control form-control-sm"
+            name="branch_id"
+            id="branch_id"
+            required>
+        <option value="">Select Branch</option>
     </select>
 </div>
 
@@ -96,98 +106,148 @@ include "include/topnavbar.php";
 </div>
 <?php include "include/footerscripts.php"; ?>
 <script>
-    $(document).ready(function() {
-        var addcheck='<?php echo $addcheck; ?>';
-        var editcheck='<?php echo $editcheck; ?>';
-        var statuscheck='<?php echo $statuscheck; ?>';
-        var deletecheck='<?php echo $deletecheck; ?>';
+$(document).ready(function() {
 
-        $('#dataTable').DataTable({
-            "destroy": true,
-            "processing": true,
-            "serverSide": true,
-            ajax: {
-                url: "<?php echo base_url() ?>scripts/useraccountlist.php",
-                type: "POST", // you can use GET
-                data: function(d) {
-                    d.userID = '<?php echo $_SESSION['userid']; ?>';
-                }
-            },
-            "order": [[ 0, "desc" ]],
-            "columns": [
-                {
-                    "data": "idtbl_user"
-                },
-                {
-                    "data": "name"
-                },
-                {
-                    "data": "username"
-                },
-                {
-                    "data": "type"
-                },
-                { "data": "location" },
-                {
-                    "targets": -1,
-                    "className": 'text-right',
-                    "data": null,
-                    "render": function(data, type, full) {
-                        var button='';
-                        button+='<button class="btn btn-primary btn-sm btnEdit mr-1 ';if(editcheck!=1){button+='d-none';}button+='" id="'+full['idtbl_user']+'"><i class="fas fa-pen"></i></button>';
-                        if(full['status']==1){
-                            button+='<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full['idtbl_user']+'/2" onclick="return deactive_confirm()" target="_self" class="btn btn-success btn-sm mr-1 ';if(statuscheck!=1){button+='d-none';}button+='"><i class="fas fa-check"></i></a>';
-                        }else{
-                            button+='<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full['idtbl_user']+'/1" onclick="return active_confirm()" target="_self" class="btn btn-warning btn-sm mr-1 ';if(statuscheck!=1){button+='d-none';}button+='"><i class="fas fa-times"></i></a>';
-                        }
-                        button+='<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full['idtbl_user']+'/3" onclick="return delete_confirm()" target="_self" class="btn btn-danger btn-sm ';if(deletecheck!=1){button+='d-none';}button+='"><i class="fas fa-trash-alt"></i></a>';
-                        
-                        return button;
-                    }
-                }
-            ],
-            drawCallback: function(settings) {
-                $('[data-toggle="tooltip"]').tooltip();
+    var addcheck    = '<?php echo $addcheck; ?>';
+    var editcheck   = '<?php echo $editcheck; ?>';
+    var statuscheck = '<?php echo $statuscheck; ?>';
+    var deletecheck = '<?php echo $deletecheck; ?>';
+
+    /* =====================================================
+     * DATATABLE – USER ACCOUNT LIST
+     * ===================================================== */
+    var table = $('#dataTable').DataTable({
+        destroy: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "<?php echo base_url() ?>scripts/useraccountlist.php",
+            type: "POST",
+            data: function (d) {
+                d.userID = '<?php echo $this->session->userdata("userid"); ?>';
             }
-        });
-        $('#dataTable tbody').on('click', '.btnEdit', function() {
-            var r = confirm("Are you sure, You want to Edit this ? ");
-            if (r == true) {
-                var id = $(this).attr('id');
-                $.ajax({
-                    type: "POST",
-                    data: {
-                        recordID: id
-                    },
-                    url: '<?php echo base_url() ?>User/Useraccountedit',
-                    success: function(result) { //alert(result);
-                        var obj = JSON.parse(result);
-                        $('#recordID').val(obj.id);
-                        $('#accountname').val(obj.name); 
-                        $('#username').val(obj.username); 
-                        $('#usertype').val(obj.type);  
-                        $('#location').val(obj.location);   // 🔥 IMPORTANT
+        },
+        order: [[0, "desc"]],
+        columns: [
+            { data: "idtbl_user" },
+            { data: "name" },
+            { data: "username" },
+            { data: "type" },
+            { data: "company" },   // ✅ NEW
+            { data: "branch" },    // ✅ NEW
+            {
+                data: null,
+                className: "text-right",
+                render: function (data, type, full) {
 
-                        $('#password').removeAttr("required");
+                    var button = '';
 
-                        $('#recordOption').val('2');
-                        $('#submitBtn').html('<i class="far fa-save"></i>&nbsp;Update');
+                    // EDIT
+                    button += '<button class="btn btn-primary btn-sm btnEdit mr-1 ';
+                    if (editcheck != 1) { button += 'd-none'; }
+                    button += '" data-id="'+full.idtbl_user+'"><i class="fas fa-pen"></i></button>';
+
+                    // STATUS
+                    if (full.status == 1) {
+                        button += '<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full.idtbl_user+'/2" ';
+                        button += 'onclick="return deactive_confirm()" ';
+                        button += 'class="btn btn-success btn-sm mr-1 ';
+                        if (statuscheck != 1) { button += 'd-none'; }
+                        button += '"><i class="fas fa-check"></i></a>';
+                    } else {
+                        button += '<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full.idtbl_user+'/1" ';
+                        button += 'onclick="return active_confirm()" ';
+                        button += 'class="btn btn-warning btn-sm mr-1 ';
+                        if (statuscheck != 1) { button += 'd-none'; }
+                        button += '"><i class="fas fa-times"></i></a>';
                     }
-                });
+
+                    // DELETE
+                    button += '<a href="<?php echo base_url() ?>User/Useraccountstatus/'+full.idtbl_user+'/3" ';
+                    button += 'onclick="return delete_confirm()" ';
+                    button += 'class="btn btn-danger btn-sm ';
+                    if (deletecheck != 1) { button += 'd-none'; }
+                    button += '"><i class="fas fa-trash-alt"></i></a>';
+
+                    return button;
+                }
+            }
+        ],
+        drawCallback: function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        }
+    });
+
+    /* =====================================================
+     * LOAD BRANCHES BY COMPANY (FORM)
+     * ===================================================== */
+    $('#company_id').change(function () {
+        var company_id = $(this).val();
+
+        $('#branch_id').html('<option value="">Loading...</option>');
+
+        $.post(
+            "<?php echo base_url('User/getBranchesByCompany'); ?>",
+            { company_id: company_id },
+            function (data) {
+                $('#branch_id').html(data);
+            }
+        );
+    });
+
+    /* =====================================================
+     * EDIT USER
+     * ===================================================== */
+    $('#dataTable tbody').on('click', '.btnEdit', function () {
+
+        if (!confirm("Are you sure you want to edit this user?")) {
+            return;
+        }
+
+        var id = $(this).data('id');
+
+        $.ajax({
+            type: "POST",
+            url: "<?php echo base_url() ?>User/Useraccountedit",
+            data: { recordID: id },
+            success: function (result) {
+
+                var obj = JSON.parse(result);
+
+                $('#recordID').val(obj.id);
+                $('#accountname').val(obj.name);
+                $('#username').val(obj.username);
+                $('#usertype').val(obj.type);
+
+                // 🔥 COMPANY + BRANCH
+                $('#company_id').val(obj.company_id).trigger('change');
+
+                setTimeout(function () {
+                    $('#branch_id').val(obj.branch_id);
+                }, 500);
+
+                $('#password').removeAttr("required");
+                $('#recordOption').val('2');
+                $('#submitBtn').html('<i class="far fa-save"></i>&nbsp;Update');
             }
         });
     });
+});
 
-    function deactive_confirm() {
-        return confirm("Are you sure you want to deactive this?");
-    }
+/* =====================================================
+ * CONFIRMATIONS
+ * ===================================================== */
+function deactive_confirm() {
+    return confirm("Are you sure you want to deactivate this user?");
+}
 
-    function active_confirm() {
-        return confirm("Are you sure you want to active this?");
-    }
+function active_confirm() {
+    return confirm("Are you sure you want to activate this user?");
+}
 
-    function delete_confirm() {
-        return confirm("Are you sure you want to remove this?");
-    }
+function delete_confirm() {
+    return confirm("Are you sure you want to remove this user?");
+}
 </script>
+
 <?php include "include/footer.php"; ?>

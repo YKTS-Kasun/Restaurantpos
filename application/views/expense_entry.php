@@ -10,7 +10,28 @@ include "include/topnavbar.php";
     <div id="layoutSidenav_content" class="flex-grow-1">
         <main class="p-3">
 
-            <h4 class="mb-4">Expense Entry</h4>
+             <!-- PAGE HEADER -->
+            <div class="page-header page-header-light bg-white shadow">
+                <div class="container-fluid">
+                    <div class="page-header-content py-3">
+                        <h1 class="page-header-title font-weight-light">
+                            <div class="page-header-icon">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <span>Expense Entry</span>
+                        </h1>
+                        <?php
+                        $location_name = $this->session->userdata('location_name');
+                       
+                        ?>
+                        <small class="text-muted">
+                            Location : <b><?= $location_name ?></b>
+                        </small>
+
+                    </div>
+                </div>
+            </div>
+            <br>
 
             <?php if($this->session->flashdata('msg')): ?>
                 <div class="alert alert-info"><?= $this->session->flashdata('msg'); ?></div>
@@ -26,50 +47,60 @@ include "include/topnavbar.php";
                         </div>
 
                         <div class="card-body">
-                            <form action="<?= base_url('ExpenseEntry/save_or_update'); ?>" method="post">
+<form action="<?= base_url('ExpenseEntry/save_or_update'); ?>" method="post">
 
-                                <input type="hidden" name="id" id="exp_id">
+    <input type="hidden" name="id" id="exp_id">
 
-                                <div class="form-group">
-                                    <label>Category *</label>
-                                    <select name="categoryid" id="exp_category" class="form-control" required>
-                                        <option value="">Select</option>
-                                        <?php foreach($categories as $c): ?>
-                                            <option value="<?= $c->idtbl_expense_category; ?>"><?= $c->category; ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
+    <!-- ✅ branch / location -->
+    <input type="hidden" name="idtbl_location"
+           value="<?= $this->session->userdata('idtbl_location'); ?>">
 
-                                <div class="form-group">
-                                    <label>Amount *</label>
-                                    <input type="number" step="0.01" id="exp_amount" name="amount" class="form-control" required>
-                                </div>
+    <div class="form-group">
+        <label>Type *</label>
+        <select name="categoryid" id="exp_category" class="form-control" required>
+            <option value="">Select</option>
+            <?php foreach($categories as $c): ?>
+                <option value="<?= $c->idtbl_expense_category; ?>">
+                    <?= $c->category; ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
-                                <div class="form-group">
-                                    <label>Date *</label>
-                                    <input type="date" id="exp_date" name="expdate" value="<?= date('Y-m-d'); ?>" class="form-control" required>
-                                </div>
+    <div class="form-group">
+        <label>Amount *</label>
+        <input type="number" step="0.01" id="exp_amount"
+               name="amount" class="form-control" required>
+    </div>
 
-                                <div class="form-group">
-                                    <label>Description</label>
-                                    <textarea id="exp_desc" name="description" rows="2" class="form-control"></textarea>
-                                </div>
+    <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="exp_date" name="expdate"
+               value="<?= date('Y-m-d'); ?>" class="form-control" required>
+    </div>
 
-                                <button id="btn-save" class="btn btn-primary w-100">
-                                    <i class="fa fa-plus"></i> Save Expense
-                                </button>
+    <div class="form-group">
+        <label>Description</label>
+        <textarea id="exp_desc" name="description"
+                  rows="2" class="form-control"></textarea>
+    </div>
 
-                                <button id="btn-update" class="btn btn-warning w-100 d-none">
-                                    <i class="fa fa-edit"></i> Update Expense
-                                </button>
+    <button id="btn-save" class="btn btn-primary w-100">
+        <i class="fa fa-plus"></i> Save Expense
+    </button>
 
-                            </form>
+    <button id="btn-update" class="btn btn-warning w-100 d-none">
+        <i class="fa fa-edit"></i> Update Expense
+    </button>
+
+</form>
+
                         </div>
                     </div>
                 </div>
 
                 <!-- RIGHT TABLE -->
-                <div class="col-lg-8 mb-4">
+                <div class="col-lg-8 mb-4 table-responsive">
 
                     <div class="card shadow-sm border-0 mb-3">
                         <div class="card-body">
@@ -105,6 +136,7 @@ include "include/topnavbar.php";
                                     PDF
                                 </button>
 
+
                             </form>
                         </div>
                     </div>
@@ -129,6 +161,7 @@ include "include/topnavbar.php";
                         <thead class="thead-dark">
                         <tr>
                             <th>Date</th>
+                            <th>Location</th>
                             <th>Category</th>
                             <th>Description</th>
                             <th class="text-right">Amount</th>
@@ -140,7 +173,7 @@ include "include/topnavbar.php";
 
                         <?php foreach ($dates_to_show as $date): ?>
                             <tr class="table-primary toggle-btn" data-target="row-<?= $date ?>" style="cursor:pointer;">
-                                <td colspan="4">
+                                <td colspan="5">
                                     <span class="arrow">►</span> 
                                     <b><?= $date ?></b>
                                 </td>
@@ -155,15 +188,40 @@ include "include/topnavbar.php";
                                 ?>
                                 <tr class="collapse-row row-<?= $date ?>" style="display:none;">
                                     <td><?= $item->expdate ?></td>
+                                    <td>
+                                        <?= $item->location_name ?>
+                                        <?php if ($item->location_type == 'HO'): ?>
+                                            <span class="badge badge-primary ml-1">HO</span>
+                                        <?php else: ?>
+                                            <span class="badge badge-secondary ml-1">Branch</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?= $item->category ?></td>
                                     <td><?= $item->description ?></td>
                                     <td class="text-right"><?= number_format($item->amount,2) ?></td>
                                     <td>
+                                    <?php if (
+                                        $this->session->userdata('location_type') != 'HO' ||
+                                        $item->location_type == 'HO'
+                                    ): ?>
                                         <button class="btn btn-warning btn-sm"
-                                            onclick="loadEdit('<?= $item->idtbl_expense ?>', '<?= $item->categoryid ?>', '<?= $item->amount ?>', '<?= $item->expdate ?>', `<?= $item->description ?>`)">
+                                                onclick="loadEdit(
+                                                    '<?= $item->idtbl_expense ?>',
+                                                    '<?= $item->categoryid ?>',
+                                                    '<?= $item->amount ?>',
+                                                    '<?= $item->expdate ?>',
+                                                    <?= json_encode($item->description) ?>
+                                                )"
+                                                >
                                             Edit
                                         </button>
-                                        <a href="ExpenseEntry/delete/<?= $item->idtbl_expense ?>" onclick="return confirm('Delete?');" class="btn btn-danger btn-sm">
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
+
+                                        <a href="ExpenseEntry/delete/<?= $item->idtbl_expense ?>"
+                                        onclick="return confirm('Delete?');"
+                                        class="btn btn-danger btn-sm">
                                             Delete
                                         </a>
                                     </td>
@@ -171,7 +229,7 @@ include "include/topnavbar.php";
                             <?php endforeach; ?>
 
                             <tr class="collapse-row row-<?= $date ?>" style="display:none;background:#f0f0f0;">
-                                <td colspan="3" class="text-right"><b>Total</b></td>
+                                <td colspan="4" class="text-right"><b>Total</b></td>
                                 <td class="text-right"><b><?= number_format($day_total,2) ?></b></td>
                                 <td></td>
                             </tr>

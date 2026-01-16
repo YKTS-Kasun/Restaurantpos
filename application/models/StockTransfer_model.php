@@ -118,17 +118,8 @@ public function approve_transfer($transfer_id)
         return ['status'=>false,'msg'=>'Invalid transfer'];
     }
 
-    // 2️⃣ 🔐 CHECK LOGGED-IN USER IS HO (🔥 REAL FIX)
-    if (
-        !isset($_SESSION['location_type']) ||
-        $_SESSION['location_type'] !== 'HO'
-    ) {
-        $this->db->trans_rollback();
-        return [
-            'status'=>false,
-            'msg'=>'Only Head Office can approve stock transfers'
-        ];
-    }
+    // ❌ LOCATION CHECK REMOVED ❌
+    // 👉 privilege already validated in controller
 
     // 3️⃣ IF ALREADY APPROVED → SKIP
     if ($transfer->status === 'APPROVED') {
@@ -141,71 +132,87 @@ public function approve_transfer($transfer_id)
         ->get('tbl_stock_transfer_detail')
         ->result();
 
-foreach ($items as $item) {
+    foreach ($items as $item) {
 
-    $material_id = (int)$item->tbl_res_material_info_id;
-    $reqQty      = (float)$item->qty;
+        $material_id = (int)$item->tbl_res_material_info_id;
+        $reqQty      = (float)$item->qty;
 
-    // 1️⃣ GET AVAILABLE STOCK ROWS (FIFO)
-    $stocks = $this->db
-        ->where('idtbl_location', $transfer->from_location_id)
-        ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
-        ->where('status', 1)
-        ->where('qty >', 0)
-        ->order_by('insertdatetime', 'ASC')
-        ->get('tbl_stock')
-        ->result();
+        // FIFO STOCK
+        $stocks = $this->db
+            ->where('idtbl_location', $transfer->from_location_id)
+            ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
+            ->where('status', 1)
+            ->where('qty >', 0)
+            ->order_by('insertdatetime', 'ASC')
+            ->get('tbl_stock')
+            ->result();
 
-    $available = 0;
-    foreach ($stocks as $s) {
-        $available += $s->qty;
-    }
-
-    if ($available < $reqQty) {
-        $this->db->trans_rollback();
-        return [
-            'status' => false,
-            'msg'    => 'Insufficient stock'
-        ];
-    }
-
-    // 2️⃣ DEDUCT FIFO
-    $balance = $reqQty;
-
-    foreach ($stocks as $s) {
-
-        if ($balance <= 0) break;
-
-        if ($s->qty <= $balance) {
-            // consume whole row
-            $this->db->where('idtbl_stock', $s->idtbl_stock)
-                     ->update('tbl_stock', ['qty' => 0]);
-
-            $balance -= $s->qty;
-        } else {
-            // partial consume
-            $this->db->set('qty', 'qty - '.$balance, false)
-                     ->where('idtbl_stock', $s->idtbl_stock)
-                     ->update('tbl_stock');
-
-            $balance = 0;
+        $available = 0;
+        foreach ($stocks as $s) {
+            $available += $s->qty;
         }
+
+        if ($available < $reqQty) {
+            $this->db->trans_rollback();
+            return [
+                'status' => false,
+                'msg'    => 'Insufficient stock'
+            ];
+        }
+
+        // FIFO DEDUCTION
+        $balance = $reqQty;
+
+        foreach ($stocks as $s) {
+            if ($balance <= 0) break;
+
+            if ($s->qty <= $balance) {
+                $this->db->where('idtbl_stock', $s->idtbl_stock)
+                         ->update('tbl_stock', ['qty' => 0]);
+                $balance -= $s->qty;
+            } else {
+                $this->db->set('qty', 'qty - '.$balance, false)
+                         ->where('idtbl_stock', $s->idtbl_stock)
+                         ->update('tbl_stock');
+                $balance = 0;
+            }
+        }
+
+        // ADD TO DESTINATION
+        $this->db->query("
+            INSERT INTO tbl_stock
+            (
+                batchno,
+                qty,
+                status,
+                insertdatetime,
+                tbl_res_user_idtbl_res_user,
+                tbl_res_material_info_idtbl_res_material_info,
+                idtbl_location
+            )
+            VALUES
+            (
+                'TRANSFER',
+                ?,
+                1,
+                NOW(),
+                ?,
+                ?,
+                ?
+            )
+            ON DUPLICATE KEY UPDATE
+                qty = qty + VALUES(qty),
+                updatedatetime = NOW(),
+                updateuser = VALUES(tbl_res_user_idtbl_res_user)
+        ", [
+            $reqQty,
+            $_SESSION['userid'],
+            $material_id,
+            $transfer->to_location_id
+        ]);
     }
 
-    // 3️⃣ ADD TO DESTINATION (single row)
-    $this->db->insert('tbl_stock', [
-        'batchno' => 'TRANSFER',
-        'qty'     => $reqQty,
-        'status'  => 1,
-        'insertdatetime' => date('Y-m-d H:i:s'),
-        'tbl_res_user_idtbl_res_user' => $_SESSION['userid'],
-        'tbl_res_material_info_idtbl_res_material_info' => $material_id,
-        'idtbl_location' => $transfer->to_location_id
-    ]);
-}
-
-
-    // 8️⃣ UPDATE TRANSFER STATUS
+    // UPDATE TRANSFER STATUS
     $this->db->where('idtbl_stock_transfer', $transfer_id)
         ->update('tbl_stock_transfer', [
             'status'        => 'APPROVED',
@@ -223,50 +230,87 @@ foreach ($items as $item) {
 }
 
 
-    /* =====================================================
-     * GET TRANSFER HEADER (VIEW MODAL)
-     * ===================================================== */
- public function get_transfer_header($id) {
 
+/* =====================================================
+ * GET TRANSFER HEADER (VIEW MODAL)
+ * ===================================================== */
+public function get_transfer_header($id)
+{
     return $this->db
         ->select("
             st.*,
-            IF(st.from_location_type='HEAD','Head Office',l1.location_name) AS from_location,
-            IF(st.to_location_type='HEAD','Head Office',l2.location_name) AS to_location,
-            u.name AS requested_user
+
+            /* FROM LOCATION */
+            CASE
+                WHEN st.from_location_type = 'HEAD'
+                    THEN 'Head Office'
+                ELSE l1.location_name
+            END AS from_location,
+
+            /* TO LOCATION */
+            CASE
+                WHEN st.to_location_type = 'HEAD'
+                    THEN 'Head Office'
+                ELSE l2.location_name
+            END AS to_location,
+
+            req.name AS requested_user,
+            app.name AS approved_by_name
         ")
         ->from('tbl_stock_transfer st')
-        ->join('tbl_location l1',
-            "l1.idtbl_location = st.from_location_id AND st.from_location_type='BRANCH'",
+
+        /* 🔧 ALWAYS join locations (NO type condition) */
+        ->join(
+            'tbl_location l1',
+            'l1.idtbl_location = st.from_location_id',
             'left'
         )
-        ->join('tbl_location l2',
-            "l2.idtbl_location = st.to_location_id AND st.to_location_type='BRANCH'",
+        ->join(
+            'tbl_location l2',
+            'l2.idtbl_location = st.to_location_id',
             'left'
         )
-        ->join('tbl_res_user u','u.idtbl_res_user = st.requested_by')
+
+        ->join(
+            'tbl_res_user req',
+            'req.idtbl_res_user = st.requested_by',
+            'left'
+        )
+        ->join(
+            'tbl_res_user app',
+            'app.idtbl_res_user = st.approved_by',
+            'left'
+        )
         ->where('st.idtbl_stock_transfer', $id)
         ->get()
         ->row();
 }
 
 
+
     /* =====================================================
      * GET TRANSFER ITEMS (VIEW MODAL)
      * ===================================================== */
-    public function get_transfer_items($id) {
+public function get_transfer_items($id)
+{
+    return $this->db
+        ->select('
+            d.qty,
+            m.material,
+            m.materialinfocode
+        ')
+        ->from('tbl_stock_transfer_detail d')
+        ->join(
+            'tbl_res_material_info m',
+            'm.idtbl_res_material_info = d.tbl_res_material_info_id'
+        )
+        ->where('d.tbl_stock_transfer_id', $id)
+        ->get()
+        ->result();
+}
 
-        return $this->db
-            ->select('d.qty, m.material')
-            ->from('tbl_stock_transfer_detail d')
-            ->join('tbl_res_material_info m',
-       'm.idtbl_res_material_info = d.tbl_res_material_info_id')
-->where('d.tbl_stock_transfer_id', $id)
-            ->get()
-            ->result();
-    }
     
-    public function reject_transfer($transfer_id)
+public function reject_transfer($transfer_id)
 {
     $this->db->trans_begin();
 
@@ -301,16 +345,22 @@ foreach ($items as $item) {
             $material_id = (int)$item->tbl_res_material_info_id;
             $qty         = (float)$item->qty;
 
-            // 🔄 ADD BACK TO SOURCE
+            // 🔄 ADD BACK TO SOURCE LOCATION
             $this->db->set('qty', 'qty + '.$qty, false)
                 ->where('idtbl_location', $transfer->from_location_id)
-                ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
+                ->where(
+                    'tbl_res_material_info_idtbl_res_material_info',
+                    $material_id
+                )
                 ->update('tbl_stock');
 
-            // 🔄 DEDUCT FROM DESTINATION
+            // 🔄 DEDUCT FROM DESTINATION LOCATION
             $this->db->set('qty', 'qty - '.$qty, false)
                 ->where('idtbl_location', $transfer->to_location_id)
-                ->where('tbl_res_material_info_idtbl_res_material_info', $material_id)
+                ->where(
+                    'tbl_res_material_info_idtbl_res_material_info',
+                    $material_id
+                )
                 ->update('tbl_stock');
         }
     }

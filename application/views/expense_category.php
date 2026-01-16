@@ -10,7 +10,20 @@ include "include/topnavbar.php";
     <div id="layoutSidenav_content" class="flex-grow-1">
         <main class="p-3">
 
-            <h4 class="mb-4">Expense Type</h4>
+             <!-- PAGE HEADER -->
+            <div class="page-header page-header-light bg-white shadow">
+                <div class="container-fluid">
+                    <div class="page-header-content py-3">
+                        <h1 class="page-header-title font-weight-light">
+                            <div class="page-header-icon">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <span>Expense Type</span>
+                        </h1>
+                    </div>
+                </div>
+            </div>
+            <br>
 
             <?php if($this->session->flashdata('msg')): ?>
                 <div class="alert alert-info">

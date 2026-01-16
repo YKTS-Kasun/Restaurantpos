@@ -33,9 +33,14 @@ $columns = array(
         'field' => 'usertype'
     ),
     array(
-        'db' => '`l`.`location_name`',
-        'dt' => 'location',
-        'field' => 'location_name'
+        'db' => '`c`.`company`',
+        'dt' => 'company',
+        'field' => 'company'
+    ),
+    array(
+        'db' => '`b`.`branch`',
+        'dt' => 'branch',
+        'field' => 'branch'
     ),
     array(
         'db' => '`u`.`status`',
@@ -62,22 +67,26 @@ $sql_details = array(
 require('ssp.customized.class.php');
 
 // =======================
-// JOINs
+// JOINs (UPDATED)
 // =======================
 $joinQuery = "
 FROM `tbl_res_user` AS `u`
 JOIN `tbl_res_user_type` AS `ut`
     ON `ut`.`idtbl_res_user_type` = `u`.`tbl_res_user_type_idtbl_res_user_type`
-LEFT JOIN `tbl_location` AS `l`
-    ON `l`.`idtbl_location` = `u`.`idtbl_location`
+JOIN `tbl_company` AS `c`
+    ON `c`.`idtbl_company` = `u`.`tbl_company_idtbl_company`
+LEFT JOIN `tbl_company_branch` AS `b`
+    ON `b`.`idtbl_company_branch` = `u`.`tbl_company_branch_idtbl_company_branch`
 ";
 
 // =======================
-// WHERE condition
+// WHERE condition (SECURE)
 // =======================
+// Super admin (userID = 1) → see all
 if (isset($_POST['userID']) && $_POST['userID'] == 1) {
     $extraWhere = "`u`.`status` IN (1,2)";
 } else {
+    // Normal users → hide super admin
     $extraWhere = "`u`.`status` IN (1,2) AND `u`.`idtbl_res_user` > 1";
 }
 
@@ -85,5 +94,13 @@ if (isset($_POST['userID']) && $_POST['userID'] == 1) {
 // OUTPUT
 // =======================
 echo json_encode(
-    SSP::simple($_POST, $sql_details, $table, $primaryKey, $columns, $joinQuery, $extraWhere)
+    SSP::simple(
+        $_POST,
+        $sql_details,
+        $table,
+        $primaryKey,
+        $columns,
+        $joinQuery,
+        $extraWhere
+    )
 );

@@ -390,15 +390,23 @@ autoWidth: false,
     },
 
         {
-            data:'status',
-            render:function(d){
-                if(d==='PENDING')
-                    return '<span class="badge badge-warning">Pending</span>';
-                if(d==='APPROVED')
-                    return '<span class="badge badge-success">Approved</span>';
-                return '<span class="badge badge-danger">Rejected</span>';
-            }
-        },
+    data:'status',
+    render:function(d){
+        if(d === 'PENDING'){
+            return '<span class="badge badge-warning">Pending</span>';
+        }
+        if(d === 'APPROVED'){
+            return '<span class="badge badge-success">Approved</span>';
+        }
+        if(d === 'RECEIVED'){
+            return '<span class="badge badge-primary">Received</span>';
+        }
+        if(d === 'REJECTED'){
+            return '<span class="badge badge-danger">Rejected</span>';
+        }
+        return d;
+    }
+},
         {
             data: null,
             render: function (d) {
@@ -413,6 +421,18 @@ autoWidth: false,
                         <i class="fas fa-eye"></i>
                     </button>
                 `;
+
+                /* 🚚 DISPATCH REPORT (Approved + Received only) */
+if (d.status === 'APPROVED' || d.status === 'RECEIVED') {
+    btn += `
+        <a href="<?= base_url() ?>StockTransfer/dispatch_report_pdf/${d.idtbl_stock_transfer}"
+           class="btn btn-secondary"
+           title="Dispatch Report"
+           target="_blank">
+            <i class="fas fa-truck"></i>
+        </a>
+    `;
+}
 
               
                 /* ✏ EDIT (only Pending) */

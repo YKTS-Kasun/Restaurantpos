@@ -5,22 +5,37 @@ class Userinfo extends CI_Model{
     $username = $this->input->post('username');
     $password = md5($this->input->post('password'));
 
-    $this->db->select('
-        u.*,
-        ut.usertype,
-        l.location_type,
-        l.location_name
-    ');
-    $this->db->from('tbl_res_user u');
-    $this->db->join(
-        'tbl_res_user_type ut',
-        'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
-    );
-    $this->db->join(
-        'tbl_location l',
-        'l.idtbl_location = u.idtbl_location',
-        'left'
-    );
+$this->db->select('
+    u.*,
+    ut.usertype,
+
+    c.idtbl_company,
+    c.company,
+
+    cb.idtbl_company_branch,
+    cb.branch
+');
+
+
+$this->db->from('tbl_res_user u');
+
+$this->db->join(
+    'tbl_res_user_type ut',
+    'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
+);
+
+$this->db->join(
+    'tbl_company c',
+    'c.idtbl_company = u.tbl_company_idtbl_company',
+    'left'
+);
+
+$this->db->join(
+    'tbl_company_branch cb',
+    'cb.idtbl_company_branch = u.tbl_company_branch_idtbl_company_branch',
+    'left'
+);
+
     $this->db->where('u.username', $username);
     $this->db->where('u.password', $password);
     $this->db->where('u.status', 1);
@@ -61,13 +76,17 @@ class Userinfo extends CI_Model{
     $obj->name     = $row->name;
     $obj->username = $row->username;
     $obj->type     = $row->tbl_res_user_type_idtbl_res_user_type;
-    $obj->location = $row->idtbl_location;
+    $obj->company = $row->tbl_company_idtbl_company;
+$obj->branch  = $row->tbl_company_branch_idtbl_company_branch;
+
 
     echo json_encode($obj);
 }
 
     public function Useraccountinsertupdate(){
-        $location = $this->input->post('location');
+        $company = $this->input->post('company_id');
+$branch  = $this->input->post('branch_id');
+
 
         $this->db->trans_begin();
 
@@ -84,15 +103,19 @@ class Userinfo extends CI_Model{
         $updatedatetime=date('Y-m-d H:i:s');
 
         if($recordOption==1){
-            $data = array(
+$data = array(
     'name'      => $accountname,
     'username'  => $username,
     'password'  => $password,
     'status'    => '1',
     'insertdatetime' => $updatedatetime,
     'tbl_res_user_type_idtbl_res_user_type' => $usertype,
-    'idtbl_location' => $location   // ✅ FIX
+
+    // ✅ NEW
+    'tbl_company_idtbl_company' => $company,
+    'tbl_company_branch_idtbl_company_branch' => $branch
 );
+
 
 
             $this->db->insert('tbl_res_user', $data);
@@ -133,29 +156,37 @@ class Userinfo extends CI_Model{
         }
         else{
             if(!empty($this->input->post('password'))){
-               $data = array(
-    'name'=>$accountname,
-    'username'=>$username,
-    'password'=>$password,
-    'updateuser'=>$userID,
-    'updatedatetime'=>$updatedatetime,
-    'tbl_res_user_type_idtbl_res_user_type'=>$usertype,
-    'idtbl_location'=>$location   // ✅ FIX
+$data = array(
+    'name' => $accountname,
+    'username' => $username,
+    'status' => '1',
+    'insertdatetime' => $updatedatetime,
+    'tbl_res_user_type_idtbl_res_user_type' => $usertype,
+    'tbl_company_idtbl_company' => $company,
+    'tbl_company_branch_idtbl_company_branch' => $branch
 );
+
+if(!empty($this->input->post('password'))){
+    $data['password'] = md5($this->input->post('password'));
+}
 
     
                 $this->db->where('idtbl_res_user', $recordID);
                 $this->db->update('tbl_res_user', $data);
             }
             else{
-                $data = array(
+$data = array(
     'name'=>$accountname,
     'username'=>$username,
     'updateuser'=>$userID,
     'updatedatetime'=>$updatedatetime,
     'tbl_res_user_type_idtbl_res_user_type'=>$usertype,
-    'idtbl_location'=>$location   // ✅ FIX
+
+    // ✅ NEW
+    'tbl_company_idtbl_company'=>$company,
+    'tbl_company_branch_idtbl_company_branch'=>$branch
 );
+
 
     
                 $this->db->where('idtbl_res_user', $recordID);

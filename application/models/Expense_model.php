@@ -82,54 +82,86 @@ public function delete_category($id)
 
 public function add_manual_expense($data)
 {
+    $idtbl_location = (int) $this->session->userdata('idtbl_location');
+
+    if ($idtbl_location <= 0) {
+        log_message('error', 'Expense insert blocked: invalid location');
+        return false;
+    }
+
     $insert = [
-        'categoryid'     => $data['categoryid'],
+        'idtbl_location' => $idtbl_location,
+        'categoryid'     => (int)$data['categoryid'],
         'description'    => trim($data['description']),
         'amount'         => (float)$data['amount'],
         'expdate'        => $data['expdate'],
         'status'         => 1,
         'insertdatetime' => date('Y-m-d H:i:s'),
-        'updateuser'     => $this->session->userdata('userid')
+        'updateuser'     => (int)$this->session->userdata('userid')
     ];
 
     return $this->db->insert('tbl_expense', $insert);
 }
 
+
+
+
 public function update_manual_expense($id, $data)
 {
-    $update = [
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
+
+    $this->db->where('idtbl_expense', $id);
+
+    if ($location_type !== 'HO') {
+        $this->db->where('idtbl_location', $location_id);
+    }
+
+    return $this->db->update('tbl_expense', [
         'categoryid'     => $data['categoryid'],
         'description'    => trim($data['description']),
         'amount'         => (float)$data['amount'],
         'expdate'        => $data['expdate'],
         'updatedatetime' => date('Y-m-d H:i:s'),
         'updateuser'     => $this->session->userdata('userid')
-    ];
-
-    return $this->db
-        ->where('idtbl_expense', $id)
-        ->update('tbl_expense', $update);
+    ]);
 }
+
+
 
 public function get_manual_expense($id)
 {
-    return $this->db
-        ->where('idtbl_expense', $id)
-        //->where('ref_type', 'MANUAL')
-        ->get('tbl_expense')
-        ->row();
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
+
+    $this->db->where('idtbl_expense', $id);
+    $this->db->where('status', 1);
+
+    if ($location_type !== 'HO') {
+        $this->db->where('idtbl_location', $location_id);
+    }
+
+    return $this->db->get('tbl_expense')->row();
 }
 
 public function soft_delete_manual_expense($id)
 {
-    return $this->db
-        ->where('idtbl_expense', $id)
-        ->update('tbl_expense', [
-            'status'         => 0,
-            'updatedatetime' => date('Y-m-d H:i:s'),
-            'updateuser'     => $this->session->userdata('userid')
-        ]);
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
+
+    $this->db->where('idtbl_expense', $id);
+
+    if ($location_type !== 'HO') {
+        $this->db->where('idtbl_location', $location_id);
+    }
+
+    return $this->db->update('tbl_expense', [
+        'status'         => 0,
+        'updatedatetime' => date('Y-m-d H:i:s'),
+        'updateuser'     => $this->session->userdata('userid')
+    ]);
 }
+
 
 public function list_manual_expenses()
 {
@@ -157,7 +189,9 @@ public function get_all_expenses($filters = [])
     e.idtbl_expense AS id,
     e.categoryid AS categoryid,
     'MANUAL' AS source,
-    c.category AS category,
+   c.category AS category,
+l.location_name,
+l.location_type,
     e.description AS description,
     e.amount AS amount,
     e.expdate AS edate,
@@ -166,7 +200,8 @@ public function get_all_expenses($filters = [])
 
 
     $this->db->from("tbl_expense e");
-    $this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
+$this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
+$this->db->join("tbl_location l", "l.idtbl_location = e.idtbl_location", "left");
     $this->db->where("e.status", 1);
 
     if (!empty($date_from)) {
@@ -212,12 +247,31 @@ public function get_all_expenses($filters = [])
         }
         return $total;
     }
-    public function get_daywise_expenses($from = null, $to = null)
+
+public function get_daywise_expenses($from = null, $to = null)
 {
-    $this->db->select('e.idtbl_expense, e.expdate, e.description, e.amount, e.categoryid, c.category');
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
+
+    $this->db->select('
+        e.idtbl_expense,
+        e.categoryid,
+        e.expdate,
+        e.description,
+        e.amount,
+        c.category,
+        l.location_name,
+        l.location_type
+    ');
     $this->db->from('tbl_expense e');
     $this->db->join('tbl_expense_category c', 'c.idtbl_expense_category = e.categoryid');
+    $this->db->join('tbl_location l', 'l.idtbl_location = e.idtbl_location', 'left');
     $this->db->where('e.status', 1);
+
+    // Branch restriction
+    if ($location_type !== 'HO') {
+        $this->db->where('e.idtbl_location', $location_id);
+    }
 
     if ($from && $to) {
         $this->db->where('e.expdate >=', $from);
@@ -230,37 +284,65 @@ public function get_all_expenses($filters = [])
 
 public function get_day_expenses($date)
 {
-    return $this->db
-        ->select('e.*, c.category')
-        ->from('tbl_expense e')
-        ->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid')
-        ->where('e.status', 1)
-        ->where('e.expdate', $date)
-        ->order_by('e.idtbl_expense','ASC')
-        ->get()
-        ->result();
-}
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
 
-public function get_range_expenses($from, $to, $cat = "")
-{
-    $this->db->select("e.*, c.category");
-    $this->db->from("tbl_expense e");
-    $this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
-    $this->db->where("e.status", 1);
+    $this->db->select('
+    e.*,
+    c.category,
+    l.location_name,
+    l.location_type
+');
 
-    if($from != "")
-        $this->db->where("e.expdate >=", $from);
+$this->db->from('tbl_expense e');
+$this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+$this->db->join('tbl_location l','l.idtbl_location = e.idtbl_location','left');
 
-    if($to != "")
-        $this->db->where("e.expdate <=", $to);
+    $this->db->where('e.status', 1);
+    $this->db->where('e.expdate', $date);
 
-    if($cat != "")
-        $this->db->where("c.category", $cat);
-
-    $this->db->order_by("e.expdate", "ASC");
+    if ($location_type !== 'HO') {
+        $this->db->where('e.idtbl_location', $location_id);
+    }
 
     return $this->db->get()->result();
 }
+
+
+public function get_range_expenses($from, $to, $cat = "")
+{
+    $location_type = $this->session->userdata('location_type');
+    $location_id   = (int)$this->session->userdata('idtbl_location');
+
+$this->db->select("
+    e.*,
+    c.category,
+    l.location_name,
+    l.location_type
+");
+
+    $this->db->from("tbl_expense e");
+$this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
+$this->db->join("tbl_location l", "l.idtbl_location = e.idtbl_location", "left");
+    $this->db->where("e.status", 1);
+
+    if ($location_type !== 'HO') {
+        $this->db->where("e.idtbl_location", $location_id);
+    }
+
+    if ($from != "")
+        $this->db->where("e.expdate >=", $from);
+
+    if ($to != "")
+        $this->db->where("e.expdate <=", $to);
+
+    if ($cat != "")
+        $this->db->where("c.category", $cat);
+
+    $this->db->order_by("e.expdate", "ASC");
+    return $this->db->get()->result();
+}
+
 
 
 }
