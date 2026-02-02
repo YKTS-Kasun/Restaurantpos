@@ -31,7 +31,7 @@
                                     <div class="form-group">
                                         <label class="small mb-1">Company *</label>
                                         <select name="company_id" id="company_id"
-                                                class="form-control form-control-sm rounded-0">
+                                                class="form-control form-control-sm rounded-0" required>
                                             <option value="">Select</option>
                                             <?php foreach ($companylist as $c): ?>
                                                 <option value="<?= $c->idtbl_company ?>">
@@ -43,7 +43,10 @@
 
                                     <!-- BRANCH -->
                                     <div class="form-group">
-                                        <label class="small mb-1">Company Branch *</label>
+                                        <label class="small mb-1">
+                                            Company Branch
+                                            <small class="text-muted">(Head Office users can leave empty)</small>
+                                        </label>
                                         <select name="branch_id" id="branch_id"
                                                 class="form-control form-control-sm rounded-0">
                                             <option value="">Select</option>

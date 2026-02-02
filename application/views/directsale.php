@@ -175,13 +175,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Qty -->
-<div class="modal fade" id="modalqty" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalqty" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-sm">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">ADD TO LIST</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -240,13 +240,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Payment -->
-<div class="modal fade" id="modalpayment" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalpayment" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">PAYMENT</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -353,13 +353,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Invoice Receipt -->
-<div class="modal fade" id="modalinvoicereceipt" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalinvoicereceipt" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel"></h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -374,13 +374,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Invoice Pos Receipt -->
-<div class="modal fade" id="modalinvoicereceiptpos" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalinvoicereceiptpos" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel"></h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -395,13 +395,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Table -->
-<div class="modal fade" id="modaltable" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modaltable" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-l">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel">Select the Table</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -419,13 +419,13 @@ include "include/topnavbar.php";
 </div>
 
 <!-- Modal Table Category -->
-<div class="modal fade" id="modaltablecat" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modaltablecat" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-l">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel">Select the Table Category</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -460,13 +460,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Approve Price Change -->
-<div class="modal fade" id="modalapprovebill" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalapprovebill" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-sm">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">Approve Bill</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -497,13 +497,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Retail Whole Sale -->
-<div class="modal fade" id="modaltablepayment" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modaltablepayment" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel">Table Payments</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -532,13 +532,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Retail Whole Sale -->
-<div class="modal fade" id="modalorders" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalorders" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel">Online Orders</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -567,13 +567,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Cash Or Credit -->
-<div class="modal fade" id="modalcashcredit" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalcashcredit" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-sm">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel"></h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -625,13 +625,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal HTML -->
-<div class="modal fade" id="paymentModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade" id="paymentModal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 	aria-labelledby="paymentModalLabel" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="paymentModalLabel">Payment Details</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -664,20 +664,20 @@ include "include/topnavbar.php";
 				</form>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 				<button type="button" class="btn btn-primary" id="savePayment">Save Payment</button>
 			</div>
 		</div>
 	</div>
 </div>
 <!-- Discount Approval Modal -->
-<div class="modal fade" id="discountApprovalModal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="discountApprovalModal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	role="dialog" aria-labelledby="discountApprovalModalLabel" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content bg-danger-soft">
 			<div class="modal-header">
 				<h5 class="modal-title" id="discountApprovalModalLabel">Discount Approval</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -694,7 +694,7 @@ include "include/topnavbar.php";
 				</form>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 				<button type="button" class="btn btn-primary" id="approveDiscount">Approve Discount</button>
 			</div>
 		</div>
@@ -702,13 +702,13 @@ include "include/topnavbar.php";
 </div>
 
 <!-- Payment Modal -->
-<div class="modal fade" id="paymentaddModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
+<div class="modal fade" id="paymentaddModal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog"
 	aria-labelledby="paymentModalAddLabel" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="paymentModalAddLabel">Insert Payment</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -754,20 +754,20 @@ include "include/topnavbar.php";
 				</form>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
 				<button type="button" class="btn btn-primary" id="saveAddPayment">Save Payment</button>
 			</div>
 		</div>
 	</div>
 </div>
 <!-- Discount Approval Modal -->
-<div class="modal fade" id="tablediscountApprovalModal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="tablediscountApprovalModal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	role="dialog" aria-labelledby="tablediscountApprovalModalLabel" aria-hidden="true">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content bg-danger-soft">
 			<div class="modal-header">
 				<h5 class="modal-title" id="tablediscountApprovalModalLabel">Discount Approval Table</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -785,20 +785,20 @@ include "include/topnavbar.php";
 				</form>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 				<button type="button" class="btn btn-primary" id="tableapproveDiscount">Approve Discount</button>
 			</div>
 		</div>
 	</div>
 </div>
 <!-- Modal Already Customer -->
-<div class="modal fade" id="alreadycustomermodal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="alreadycustomermodal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-xl">
 		<div class="modal-content bg-success-soft">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel"><i class="fas fa-users"></i> SELECT THE CUSTOMER</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -2358,7 +2358,7 @@ include "include/topnavbar.php";
 			onClosed: null,
 			icon_type: 'class',
 			template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert alert-{0}" role="alert">' +
-				'<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
+				'<button type="button" aria-hidden="true"class="btn-close" data-notify="dismiss">×</button>' +
 				'<span data-notify="icon"></span> ' +
 				'<span data-notify="title">{1}</span> ' +
 				'<span data-notify="message">{2}</span>' +

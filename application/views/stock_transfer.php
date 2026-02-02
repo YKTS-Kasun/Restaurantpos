@@ -2,12 +2,13 @@
 include "include/header.php";  
 include "include/topnavbar.php"; 
 ?>
-<style>/* ===============================
-   DATATABLE RESPONSIVE FIX
-================================ */
-/* ===============================
-   DATATABLE RESPONSIVE FIX
-================================ */
+
+<?php
+$company_id  = $this->session->userdata('company_id');
+$branch_id   = $this->session->userdata('branch_id');
+$branch_name = $this->session->userdata('branch_name');
+?>
+<style>
 
 #dataTable {
     width: 100% !important;
@@ -112,12 +113,13 @@ include "include/topnavbar.php";
                         <!-- CREATE BUTTON -->
                         <div class="row">
                             <div class="col-12 text-right">
-                                <button class="btn btn-primary btn-sm"
-                                    data-toggle="modal"
-                                    data-target="#transferModal"
-                                    <?php if($addcheck==0){ echo 'disabled'; } ?>>
-                                    <i class="fas fa-plus mr-2"></i>Create Stock Transfer
-                                </button>
+<button id="btnOpenTransfer"
+        class="btn btn-primary btn-sm"
+        <?php if(isset($addcheck) && $addcheck==0){ echo 'disabled'; } ?>>
+    <i class="fas fa-plus mr-2"></i>Create Stock Transfer
+</button>
+
+
                                 <hr>
                             </div>
                         </div>
@@ -151,6 +153,8 @@ include "include/topnavbar.php";
         </main>
         <?php include "include/footerbar.php"; ?>
     </div>
+</div>
+<?php include "include/footerscripts.php"; ?>
     <!-- ===============================
      VIEW STOCK TRANSFER MODAL
 ================================ -->
@@ -163,9 +167,14 @@ include "include/topnavbar.php";
                     <i class="fas fa-exchange-alt mr-2"></i>
                     Stock Transfer Details
                 </h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+<button type="button"
+        class="close"
+        data-dismiss="modal"
+        aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+</button>
+
+
             </div>
 
             <div class="modal-body" id="viewModalContent">
@@ -178,20 +187,23 @@ include "include/topnavbar.php";
     </div>
 </div>
 
-</div>
-
 <!-- ===========================================================
     CREATE STOCK TRANSFER MODAL
 =========================================================== -->
-<div class="modal fade" id="transferModal" data-backdrop="static" tabindex="-1">
+<div class="modal fade" id="transferModal" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
 
             <div class="modal-header">
                 <h5 class="modal-title">Create Stock Transfer</h5>
-                <button class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+<button type="button"
+        class="close"
+        data-dismiss="modal"
+        aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+</button>
+
+
             </div>
 
             <div class="modal-body">
@@ -204,50 +216,36 @@ include "include/topnavbar.php";
                             <div class="form-group">
     <label class="small font-weight-bold">From Location</label>
 
-    <input type="text"
-       class="form-control form-control-sm"
-       value="<?= ($from_location_type=='HEAD')
-            ? 'Head Office'
-            : 'Branch - '.$from_location_name; ?>"
-       readonly>
+<input type="text"
+ class="form-control form-control-sm"
+ value="<?= $branch_id ? 'Branch - '.$branch_name : 'Head Office' ?>"
+ readonly>
 
-    <input type="hidden" id="from_location_id"
-       value="<?= $from_location_id ?>">
-
-<input type="hidden" id="from_location_type"
-       value="<?= $from_location_type ?>">
+<input type="hidden" id="from_company_id" value="<?= $company_id ?>">
+<input type="hidden" id="from_branch_id" value="<?= $branch_id ?>">
 
 </div>
 
                             <div class="form-group">
     <label class="small font-weight-bold">To Location *</label>
 
-    <select class="form-control form-control-sm" id="to_location" required>
-        <option value="">Select Location</option>
+<select class="form-control form-control-sm" id="to_location" required>
+    <option value="">Select Location</option>
 
-        <?php if($from_location_type=='HEAD'): ?>
-            <!-- HEAD ➜ BRANCH -->
-            <?php foreach($branchlist->result() as $b){ ?>
-                <option value="BRANCH-<?= $b->idtbl_location ?>">
-                    <?= $b->location_name ?>
-                </option>
-            <?php } ?>
+    <?php foreach($branchlist as $b){ ?>
+        <?php if($b->idtbl_company_branch != $branch_id){ ?>
+            <option value="<?= $company_id ?>|<?= $b->idtbl_company_branch ?>">
+                <?= $b->branch ?>
+            </option>
+        <?php } ?>
+    <?php } ?>
 
-        <?php else: ?>
-            <!-- BRANCH ➜ HEAD -->
-            <option value="HEAD-1">Head Office</option>
+    <!-- HEAD OFFICE -->
+    <?php if($branch_id): ?>
+        <option value="<?= $company_id ?>|">Head Office</option>
+    <?php endif; ?>
+</select>
 
-            <!-- BRANCH ➜ BRANCH -->
-            <?php foreach($branchlist->result() as $b){ ?>
-                <?php if($b->idtbl_location != $from_location_id){ ?>
-                    <option value="BRANCH-<?= $b->idtbl_location ?>">
-                        <?= $b->location_name ?>
-                    </option>
-                <?php } ?>
-            <?php } ?>
-
-        <?php endif; ?>
-    </select>
 </div>
 
                             <div class="form-group">
@@ -324,7 +322,7 @@ include "include/topnavbar.php";
         <input type="hidden" id="edit_row_index" value="">
 </div>
 
-<?php include "include/footerscripts.php"; ?>
+
 
 <script>
     
@@ -336,21 +334,19 @@ $(document).ready(function(){
 $('#dataTable').DataTable({
     processing: true,
     serverSide: true,
-    responsive: false,
+    responsive: true,
 scrollX: true,
-autoWidth: false,
+autoWidth: true,
 
 
-   ajax:{
+ajax:{
     url:"<?= base_url() ?>scripts/stocktransferlist.php",
     type:"POST",
-    data: function(d){
-        d.location_id   = "<?= $from_location_id ?>";
-        d.location_type = "<?= $from_location_type ?>";
+    data:function(d){
+        d.company_id = "<?= $company_id ?>";
+        d.branch_id  = "<?= $branch_id ?>"; // NULL if HO
     }
 },
-
-
 
    order:[[1,'desc']], // transfer_date
 
@@ -389,8 +385,9 @@ autoWidth: false,
         render: d => d ? d : '-'
     },
 
-        {
+{
     data:'status',
+    className:'text-center',
     render:function(d){
         if(d === 'PENDING'){
             return '<span class="badge badge-warning">Pending</span>';
@@ -398,11 +395,11 @@ autoWidth: false,
         if(d === 'APPROVED'){
             return '<span class="badge badge-success">Approved</span>';
         }
-        if(d === 'RECEIVED'){
-            return '<span class="badge badge-primary">Received</span>';
-        }
         if(d === 'REJECTED'){
             return '<span class="badge badge-danger">Rejected</span>';
+        }
+        if(d === 'RECEIVED'){
+            return '<span class="badge badge-primary">Received</span>';
         }
         return d;
     }
@@ -470,51 +467,50 @@ $(document).on('click','.btnEditItem',function(){
 
     let row = $(this).closest('tr');
 
-    let matID   = row.find('td:eq(0)').data('material-id');
+    let matID   = row.find('td:eq(2)').text();
     let matText = row.find('td:eq(0)').text();
     let qty     = row.find('td:eq(1)').text();
     let index   = row.index();
 
-    // 🔥 ENSURE OPTION EXISTS IN SELECT
     if ($('#material option[value="'+matID+'"]').length === 0) {
         $('#material').append(
             `<option value="${matID}" selected>${matText}</option>`
         );
     }
 
-    // set values
-    $('#material').val(matID);
+    $('#material').val(matID).trigger('change');
     $('#qty').val(qty);
 
-    // edit state
     $('#edit_row_index').val(index);
     $('#btnAdd').html('<i class="fas fa-sync"></i> Update');
 });
 
+
 $('#material').on('change', function () {
 
     let material_id = $(this).val();
-    let location_id = $('#from_location_id').val();
+    let company_id = $('#from_company_id').val();
+   let branch_id = $('#from_branch_id').val();
+if(branch_id === '') {
+    branch_id = null;
+}
+
+
 
     if(material_id === ''){
         $('#available_qty').val('');
         return;
     }
 
-    $.post("<?= base_url() ?>StockTransfer/get_available_qty", {
-        material_id: material_id,
-        location_id: location_id
-    }, function (res) {
+$.post("<?= base_url() ?>StockTransfer/get_available_qty", {
+    material_id: material_id,
+    company_id: company_id,
+    branch_id: branch_id
+}, function (res) {
+    let r = JSON.parse(res);
+    $('#available_qty').val(r.status ? r.qty : 0);
+});
 
-        let r = JSON.parse(res);
-
-        if(r.status === 1){
-            $('#available_qty').val(r.qty);
-        }else{
-            $('#available_qty').val(0);
-        }
-
-    });
 });
 
     /* ===========================
@@ -525,7 +521,7 @@ $('#material').on('change', function () {
     let matText = $('#material option:selected').text();
     let matID   = $('#material').val();
     let qty     = parseFloat($('#qty').val());
-    let stock   = parseFloat($('#material option:selected').data('stock')) || 0;
+   
     let editIndex = $('#edit_row_index').val();
     let available = parseFloat($('#available_qty').val()) || 0;
 
@@ -544,10 +540,6 @@ if(qty > available){
         return;
     }
 
-    if(qty > stock){
-        alert('Quantity exceeds available stock');
-        return;
-    }
 
     /* ===============================
        UPDATE EXISTING ROW
@@ -600,15 +592,22 @@ if(qty > available){
         `);
     }
 
-    // clear form
-    $('#material').val('');
-    $('#qty').val('');
+// clear form
+$('#material').val('');
+$('#qty').val('');
+$('#available_qty').val('');
+
 });
 
     /* ===========================
        SAVE TRANSFER
     =========================== */
    $('#btnSave').click(function(){
+
+    if($('#to_location').val() === ''){
+    alert('Select destination location');
+    return;
+}
 
     let items=[];
     $('#itemTable tbody tr').each(function(){
@@ -629,32 +628,43 @@ if(qty > available){
         ? "<?= base_url() ?>StockTransfer/update"
         : "<?= base_url() ?>StockTransfer/save";
 
-    $.post(url,{
-        transfer_id: transfer_id,
-        from_location_id: $('#from_location_id').val(),
-        from_location_type: $('#from_location_type').val(),
-        to_location: $('#to_location').val(),
-        remark: $('#remark').val(),
-        items: items
-    },function(res){
+$('#btnSave').prop('disabled', true);
 
-        let r = JSON.parse(res);
+$.post(url,{
+    transfer_id: transfer_id,
+    from_company_id: $('#from_company_id').val(),
+    from_branch_id: $('#from_branch_id').val(),
+    to_location: $('#to_location').val(),
+    remark: $('#remark').val(),
+    items: items
+},function(res){
 
-        if(r.status == 1){
+        let r;
+try {
+    r = JSON.parse(res);
+} catch(e) {
+    alert('Unexpected server response');
+    $('#btnSave').prop('disabled', false);
+    return;
+}
 
-            $('#transferModal').modal('hide');
 
-            // reset form
-            $('#itemTable tbody').empty();
-            $('#remark').val('');
-            $('#transfer_id').val('');
-            $('#btnSave').html('<i class="fas fa-save"></i> Create Transfer');
+if(r.status == 1){
 
-            $('#dataTable').DataTable().ajax.reload(null,false);
+  $('#transferModal').modal('hide');
 
-        }else{
+    // reset form
+    $('#itemTable tbody').empty();
+    $('#remark').val('');
+    $('#transfer_id').val('');
+    $('#btnSave').html('<i class="fas fa-save"></i> Create Transfer');
+
+    $('#dataTable').DataTable().ajax.reload(null,false);
+}
+else{
             alert(r.message);
         }
+         $('#btnSave').prop('disabled', false);
     });
 });
 
@@ -662,32 +672,40 @@ if(qty > available){
 
 function viewTransfer(id){
 
-    $('#viewModal').modal('show');
+$('#viewModal').modal('show');
+
     $('#viewModalContent').html('<div class="text-center p-3">Loading...</div>');
 
-    $.ajax({
-        url: "<?= base_url() ?>StockTransfer/view_modal",
-        type: "POST",
-        data: { id: id },
-        success: function(res){
+    $.post(
+        "<?= base_url() ?>StockTransfer/view_modal",
+        { id: id },
+        function(res){
             $('#viewModalContent').html(res);
-        },
-        error: function(){
-            $('#viewModalContent').html(
-                '<div class="alert alert-danger">Failed to load data</div>'
-            );
         }
-    });
+    );
 }
+
 $(document).on('click','.btnRemove',function(){
     $(this).closest('tr').remove();
+
+    // 🔥 reset edit state
+    $('#edit_row_index').val('');
+    $('#btnAdd').html('<i class="fas fa-plus"></i> Add');
 });
+
 
 function editTransfer(id)
 {
     $.get("<?= base_url() ?>StockTransfer/edit/" + id, function(res){
 
-        let r = JSON.parse(res);
+        let r;
+try {
+    r = JSON.parse(res);
+} catch(e) {
+    alert('Invalid server response');
+    return;
+}
+
 
         if(r.status !== 1){
             alert('This transfer cannot be edited');
@@ -698,8 +716,9 @@ function editTransfer(id)
         $('#transfer_id').val(id);
 
         // 👉 TO LOCATION FIX
-        let toVal = r.header.to_location_type + '-' + r.header.to_location_id;
-        $('#to_location').val(toVal).trigger('change');
+let toVal = r.header.to_company_id + '|' + (r.header.to_branch_id ?? '');
+$('#to_location').val(toVal).trigger('change');
+
 
         // remark
         $('#remark').val(r.header.remark ?? '');
@@ -709,7 +728,7 @@ function editTransfer(id)
         $('#qty').val('');
         $('#edit_row_index').val('');
         $('#btnAdd').html('<i class="fas fa-plus"></i> Add');
-
+        $('#available_qty').val('');
         // reset table
         $('#itemTable tbody').empty();
 
@@ -717,7 +736,7 @@ function editTransfer(id)
         r.items.forEach(function(it){
             $('#itemTable tbody').append(`
                 <tr>
-                    <td data-material-id="${it.material_id}">${it.material}</td>
+                    <td>${it.material}</td>
                     <td class="text-center">${it.qty}</td>
                     <td class="d-none">${it.material_id}</td>
                     <td class="text-center">
@@ -735,11 +754,22 @@ function editTransfer(id)
         // change save button
         $('#btnSave').html('<i class="fas fa-save"></i> Update Transfer');
 
-        // open modal
-        $('#transferModal').modal('show');
+$('#transferModal').modal({
+    backdrop: 'static',
+    keyboard: false
+});
+
     });
 }
 
+$('#btnOpenTransfer').on('click', function () {
+    $('#viewModal').modal('hide');
+    $('#transferModal').modal({
+        backdrop: 'static',
+        keyboard: false
+    });
+});
+;
 </script>
 
 <?php include "include/footer.php"; ?>

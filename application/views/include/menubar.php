@@ -275,12 +275,12 @@ else if($functionmenu=='StockTransfer'){
     $statuscheck = checkprivilege($menuprivilegearray, 47, 3);
     $deletecheck = checkprivilege($menuprivilegearray, 47, 4);
 }
-else if($functionmenu=='Location'){
-    $addcheck    = checkprivilege($menuprivilegearray, 48, 1);
-    $editcheck   = checkprivilege($menuprivilegearray, 48, 2);
-    $statuscheck = checkprivilege($menuprivilegearray, 48, 3);
-    $deletecheck = checkprivilege($menuprivilegearray, 48, 4);
-}
+// else if($functionmenu=='Location'){
+//     $addcheck    = checkprivilege($menuprivilegearray, 48, 1);
+//     $editcheck   = checkprivilege($menuprivilegearray, 48, 2);
+//     $statuscheck = checkprivilege($menuprivilegearray, 48, 3);
+//     $deletecheck = checkprivilege($menuprivilegearray, 48, 4);
+// }
 else if($functionmenu=='StockReceive'){
     $addcheck    = checkprivilege($menuprivilegearray, 49, 1);
     $editcheck   = checkprivilege($menuprivilegearray, 49, 2);

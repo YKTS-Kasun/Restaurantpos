@@ -1,6 +1,23 @@
+<?php
+$companyName = $_SESSION['company_name'] ?? 'Company';
+$branchId    = $_SESSION['branch_id'] ?? null;
+$branchName  = $_SESSION['branch_name'] ?? '';
+
+$locationLabel = $branchId
+    ? 'Branch - ' . $branchName
+    : 'Head Office - ' . $companyName;
+?>
+
 <nav class="topnav navbar navbar-expand shadow navbar-light bg-white" id="sidenavAccordion">
 <a class="navbar-brand" href="#"><button class="btn btn-icon btn-transparent-dark order-1 order-lg-0 mr-lg-2" id="sidebarToggle" href="#"><i data-feather="menu"></i></button>&nbsp; CROWN Restaurant</a>
     <ul class="navbar-nav align-items-center ml-auto">
+        <li class="nav-item d-none d-md-block mr-3">
+    <span class="badge badge-light border text-dark px-3 py-2">
+        <i class="fas fa-map-marker-alt mr-1"></i>
+        <?= $locationLabel ?>
+    </span>
+</li>
+
         <li class="nav-item dropdown no-caret mr-3 dropdown-user">
             <!-- <div id="ex4">
                 <span class="p1 fa-stack fa-2x has-badge" data-count="4">
@@ -10,6 +27,7 @@
             <a class="btn btn-icon btn-transparent-dark dropdown-toggle" id="navbarDropdownUserImage" href="javascript:void(0);" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="far fa-user"></i></a>
             <div class="dropdown-menu dropdown-menu-right border-0 shadow animated--fade-in-up" aria-labelledby="navbarDropdownUserImage">
                 <h6 class="dropdown-header d-flex align-items-center">
+                    
                     <img class="dropdown-user-img" src="<?php echo base_url() ?>images/user.jpg" />
                     <div class="dropdown-user-details">
                         <div class="dropdown-user-details-name"><?php echo ucfirst($_SESSION['name']); ?></div>

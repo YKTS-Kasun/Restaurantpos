@@ -31,51 +31,60 @@ class Welcome extends CI_Controller {
 public function LoginUser()
 {
     // clear old session
-  $this->session->unset_userdata([
-    'userid','name','usertype','company_id','branch_id','loggedin'
-]);
-
-
+    $this->session->unset_userdata([
+        'userid','name','usertype','typename',
+        'company_id','company_name',
+        'branch_id','branch_name',
+        'loggedin'
+    ]);
 
     $username   = $this->input->post('username');
     $password   = $this->input->post('password');
     $company_id = $this->input->post('company_id');
     $branch_id  = $this->input->post('branch_id');
 
-$user = $this->db
-    ->select('
-        u.*,
-        ut.usertype,
-        c.company,
-        cb.branch
-    ')
-    ->from('tbl_res_user u')
-    ->join('tbl_res_user_type ut',
-        'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
-    )
-    ->join('tbl_company c',
-        'c.idtbl_company = u.tbl_company_idtbl_company'
-    )
-    ->join('tbl_company_branch cb',
-        'cb.idtbl_company_branch = u.tbl_company_branch_idtbl_company_branch',
-        'left'
-    )
-    ->where('u.username', $username)
-    ->where('u.password', md5($password))
-    ->where('u.status', 1)
-    ->get()
-    ->row();
+    /* =========================
+     * USER VALIDATION (ONLY USER)
+     * ========================= */
+    $user = $this->db
+        ->select('u.*, ut.usertype')
+        ->from('tbl_res_user u')
+        ->join(
+            'tbl_res_user_type ut',
+            'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
+        )
+        ->where('u.username', $username)
+        ->where('u.password', md5($password))
+        ->where('u.status', 1)
+        ->get()
+        ->row();
 
+    if (!$user) {
+        $this->session->set_flashdata('msg','Invalid Username or Password');
+        redirect();
+    }
 
-    if ($user) {
+    /* =========================
+     * COMPANY VALIDATION
+     * ========================= */
+    $company = $this->db
+        ->where('idtbl_company', $company_id)
+        ->where('status', 1)
+        ->get('tbl_company')
+        ->row();
 
-        // 🔐 company validation
-        if ($user->tbl_company_idtbl_company != $company_id) {
-            $this->session->set_flashdata('msg','Invalid Company');
-            redirect();
-        }
+    if (!$company) {
+        $this->session->set_flashdata('msg','Invalid Company');
+        redirect();
+    }
+
+ /* =========================
+ * BRANCH VALIDATION (ONLY IF USER HAS BRANCH)
+ * ========================= */
+$branch = null;
+
 if (!empty($branch_id)) {
- 
+
     $branch = $this->db
         ->where('idtbl_company_branch', $branch_id)
         ->where('tbl_company_idtbl_company', $company_id)
@@ -89,28 +98,72 @@ if (!empty($branch_id)) {
     }
 }
 
+/* =========================
+ * LOCATION PRIVILEGE CHECK (STRICT)
+ * ========================= */
+$hasAccess = false;
+
+// Super Admin bypass
+if ($user->tbl_res_user_type_idtbl_res_user_type == 1) {
+    $hasAccess = true;
+} else {
+
+    // HO LOGIN (branch NULL)
+    if (empty($branch_id)) {
+
+        $hasAccess = $this->db
+            ->where('tbl_res_user_idtbl_res_user', $user->idtbl_res_user)
+            ->where('tbl_company_idtbl_company', $company_id)
+            ->where('tbl_company_branch_idtbl_company_branch IS NULL', null, false)
+            ->where('status', 1)
+            ->get('tbl_user_location_access')
+            ->num_rows() > 0;
+
+    }
+    // BRANCH LOGIN
+    else {
+
+        $hasAccess = $this->db
+            ->where('tbl_res_user_idtbl_res_user', $user->idtbl_res_user)
+            ->where('tbl_company_idtbl_company', $company_id)
+            ->where('tbl_company_branch_idtbl_company_branch', $branch_id)
+            ->where('status', 1)
+            ->get('tbl_user_location_access')
+            ->num_rows() > 0;
+    }
+}
+
+if (!$hasAccess) {
+    $this->session->set_flashdata(
+        'msg',
+        'You do not have access to this Company / Branch'
+    );
+    redirect();
+}
+
+    /* =========================
+     * SET SESSION (🔥 KEY PART)
+     * ========================= */
+    $this->session->sess_regenerate(true);
+
 $this->session->set_userdata([
     'userid'   => $user->idtbl_res_user,
     'name'     => $user->name,
     'usertype' => $user->tbl_res_user_type_idtbl_res_user_type,
     'typename' => $user->usertype,
 
-    'company_id'   => $user->tbl_company_idtbl_company,
-    'company_name' => $user->company,
+    'company_id'   => $company->idtbl_company,
+    'company_name' => $company->company,
 
-    'branch_id'    => $user->tbl_company_branch_idtbl_company_branch,
-    'branch_name'  => $user->branch,
+    // ✅ CORRECT
+    'branch_id'   => $branch ? $branch->idtbl_company_branch : null,
+    'branch_name' => $branch ? $branch->branch : null,
 
     'loggedin' => true
 ]);
 
 
-
-        redirect('Welcome/Dashboard');
-    }
-
-    $this->session->set_flashdata('msg','Invalid Username or Password');
-    redirect();
+    redirect('Welcome/Dashboard');
 }
 
 

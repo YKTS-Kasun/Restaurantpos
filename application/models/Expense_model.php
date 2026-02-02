@@ -82,39 +82,45 @@ public function delete_category($id)
 
 public function add_manual_expense($data)
 {
-    $idtbl_location = (int) $this->session->userdata('idtbl_location');
+    $company_id = (int) $this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id'); // NULL = HO
 
-    if ($idtbl_location <= 0) {
-        log_message('error', 'Expense insert blocked: invalid location');
+    if ($company_id <= 0) {
+        log_message('error', 'Expense insert blocked: invalid company');
         return false;
     }
 
-    $insert = [
-        'idtbl_location' => $idtbl_location,
+    return $this->db->insert('tbl_expense', [
+        'tbl_company_idtbl_company' => $company_id,
+        'tbl_company_branch_idtbl_company_branch' => $branch_id,
         'categoryid'     => (int)$data['categoryid'],
         'description'    => trim($data['description']),
         'amount'         => (float)$data['amount'],
         'expdate'        => $data['expdate'],
         'status'         => 1,
         'insertdatetime' => date('Y-m-d H:i:s'),
-        'updateuser'     => (int)$this->session->userdata('userid')
-    ];
-
-    return $this->db->insert('tbl_expense', $insert);
+        'insertuser'     => (int)$this->session->userdata('userid')
+    ]);
 }
+
 
 
 
 
 public function update_manual_expense($id, $data)
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
     $this->db->where('idtbl_expense', $id);
+    $this->db->where('tbl_company_idtbl_company', $company_id);
 
-    if ($location_type !== 'HO') {
-        $this->db->where('idtbl_location', $location_id);
+    // Branch user restriction
+    if (!is_null($branch_id)) {
+        $this->db->where(
+            'tbl_company_branch_idtbl_company_branch',
+            $branch_id
+        );
     }
 
     return $this->db->update('tbl_expense', [
@@ -131,28 +137,37 @@ public function update_manual_expense($id, $data)
 
 public function get_manual_expense($id)
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
     $this->db->where('idtbl_expense', $id);
+    $this->db->where('tbl_company_idtbl_company', $company_id);
     $this->db->where('status', 1);
 
-    if ($location_type !== 'HO') {
-        $this->db->where('idtbl_location', $location_id);
+    if (!is_null($branch_id)) {
+        $this->db->where(
+            'tbl_company_branch_idtbl_company_branch',
+            $branch_id
+        );
     }
 
     return $this->db->get('tbl_expense')->row();
 }
 
+
 public function soft_delete_manual_expense($id)
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
     $this->db->where('idtbl_expense', $id);
+    $this->db->where('tbl_company_idtbl_company', $company_id);
 
-    if ($location_type !== 'HO') {
-        $this->db->where('idtbl_location', $location_id);
+    if (!is_null($branch_id)) {
+        $this->db->where(
+            'tbl_company_branch_idtbl_company_branch',
+            $branch_id
+        );
     }
 
     return $this->db->update('tbl_expense', [
@@ -163,59 +178,90 @@ public function soft_delete_manual_expense($id)
 }
 
 
+
 public function list_manual_expenses()
 {
-    return $this->db
-        ->select('e.*, c.category')
-        ->from('tbl_expense e')
-        ->join('tbl_expense_category c', 'c.idtbl_expense_category = e.categoryid')
-        //->where('e.ref_type', 'MANUAL')
-        ->where('e.status', 1)
-        ->order_by('e.expdate', 'DESC')
-        ->get()
-        ->result();
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
+
+    $this->db->select('
+        e.*,
+        c.category,
+        b.branch AS branch_name
+    ');
+    $this->db->from('tbl_expense e');
+    $this->db->join(
+        'tbl_expense_category c',
+        'c.idtbl_expense_category = e.categoryid'
+    );
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
+
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
+
+    // Branch restriction
+    if (!is_null($branch_id)) {
+        $this->db->where(
+            'e.tbl_company_branch_idtbl_company_branch',
+            $branch_id
+        );
+    }
+
+    $this->db->order_by('e.expdate', 'DESC');
+    return $this->db->get()->result();
 }
+
 
 
     /* ---------------- COMBINED EXPENSE LIST (UPGRADED) ---------------- */
 
 public function get_all_expenses($filters = [])
 {
-    $date_from = isset($filters['date_from']) ? $filters['date_from'] : null;
-    $date_to   = isset($filters['date_to'])   ? $filters['date_to']   : null;
-    $category  = isset($filters['category'])  ? $filters['category']  : null;
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
+
+    $date_from = $filters['date_from'] ?? null;
+    $date_to   = $filters['date_to']   ?? null;
+    $category  = $filters['category']  ?? null;
 
     $this->db->select("
-    e.idtbl_expense AS id,
-    e.categoryid AS categoryid,
-    'MANUAL' AS source,
-   c.category AS category,
-l.location_name,
-l.location_type,
-    e.description AS description,
-    e.amount AS amount,
-    e.expdate AS edate,
-    1 AS can_edit
-");
+        e.idtbl_expense AS id,
+        e.categoryid,
+        'MANUAL' AS source,
+        c.category,
+        b.branch AS branch_name,
+        e.description,
+        e.amount,
+        e.expdate AS edate,
+        1 AS can_edit
+    ");
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
 
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
 
-    $this->db->from("tbl_expense e");
-$this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
-$this->db->join("tbl_location l", "l.idtbl_location = e.idtbl_location", "left");
-    $this->db->where("e.status", 1);
-
-    if (!empty($date_from)) {
-        $this->db->where("e.expdate >=", $date_from);
-    }
-    if (!empty($date_to)) {
-        $this->db->where("e.expdate <=", $date_to);
-    }
-    if (!empty($category)) {
-        $this->db->where("c.category", $category);
+    if (!is_null($branch_id)) {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
     }
 
-    $this->db->order_by("e.expdate", "DESC");
+if ($date_from) $this->db->where('e.expdate >=', $date_from);
+if ($date_to)   $this->db->where('e.expdate <=', $date_to);
 
+if (!empty($category)) {
+    $this->db->where('e.categoryid', (int)$category);
+}
+
+    $this->db->order_by('e.expdate','DESC');
     return $this->db->get()->result();
 }
 
@@ -236,22 +282,28 @@ $this->db->join("tbl_location l", "l.idtbl_location = e.idtbl_location", "left")
         return $total;
     }
 
-    public function get_month_total()
-    {
-        $from = date('Y-m-01');
-        $to   = date('Y-m-t');
-        $rows = $this->get_all_expenses($from, $to);
-        $total = 0;
-        foreach ($rows as $r) {
-            $total += (float)$r->amount;
-        }
-        return $total;
+public function get_month_total()
+{
+    $from = date('Y-m-01');
+    $to   = date('Y-m-t');
+
+    $rows = $this->get_all_expenses([
+        'date_from' => $from,
+        'date_to'   => $to
+    ]);
+
+    $total = 0;
+    foreach ($rows as $r) {
+        $total += (float)$r->amount;
     }
+    return $total;
+}
+
 
 public function get_daywise_expenses($from = null, $to = null)
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
     $this->db->select('
         e.idtbl_expense,
@@ -260,17 +312,21 @@ public function get_daywise_expenses($from = null, $to = null)
         e.description,
         e.amount,
         c.category,
-        l.location_name,
-        l.location_type
+        b.branch AS branch_name
     ');
     $this->db->from('tbl_expense e');
-    $this->db->join('tbl_expense_category c', 'c.idtbl_expense_category = e.categoryid');
-    $this->db->join('tbl_location l', 'l.idtbl_location = e.idtbl_location', 'left');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
+
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
     $this->db->where('e.status', 1);
 
-    // Branch restriction
-    if ($location_type !== 'HO') {
-        $this->db->where('e.idtbl_location', $location_id);
+    if (!is_null($branch_id)) {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
     }
 
     if ($from && $to) {
@@ -278,71 +334,273 @@ public function get_daywise_expenses($from = null, $to = null)
         $this->db->where('e.expdate <=', $to);
     }
 
-    $this->db->order_by('e.expdate', 'DESC');
+    $this->db->order_by('e.expdate','DESC');
     return $this->db->get()->result();
 }
 
 public function get_day_expenses($date)
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
     $this->db->select('
-    e.*,
-    c.category,
-    l.location_name,
-    l.location_type
-');
+        e.*,
+        c.category,
+        b.branch AS branch_name
+    ');
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
 
-$this->db->from('tbl_expense e');
-$this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
-$this->db->join('tbl_location l','l.idtbl_location = e.idtbl_location','left');
-
-    $this->db->where('e.status', 1);
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
     $this->db->where('e.expdate', $date);
+    $this->db->where('e.status', 1);
 
-    if ($location_type !== 'HO') {
-        $this->db->where('e.idtbl_location', $location_id);
+    if (!is_null($branch_id)) {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
     }
 
     return $this->db->get()->result();
 }
-
 
 public function get_range_expenses($from, $to, $cat = "")
 {
-    $location_type = $this->session->userdata('location_type');
-    $location_id   = (int)$this->session->userdata('idtbl_location');
+    $company_id = (int)$this->session->userdata('company_id');
+    $branch_id  = $this->session->userdata('branch_id');
 
-$this->db->select("
-    e.*,
-    c.category,
-    l.location_name,
-    l.location_type
-");
+    $this->db->select('
+        e.*,
+        c.category,
+        b.branch AS branch_name
+    ');
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
 
-    $this->db->from("tbl_expense e");
-$this->db->join("tbl_expense_category c", "c.idtbl_expense_category = e.categoryid");
-$this->db->join("tbl_location l", "l.idtbl_location = e.idtbl_location", "left");
-    $this->db->where("e.status", 1);
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
 
-    if ($location_type !== 'HO') {
-        $this->db->where("e.idtbl_location", $location_id);
+    if (!is_null($branch_id)) {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
     }
 
-    if ($from != "")
-        $this->db->where("e.expdate >=", $from);
+if ($from) $this->db->where('e.expdate >=', $from);
+if ($to)   $this->db->where('e.expdate <=', $to);
 
-    if ($to != "")
-        $this->db->where("e.expdate <=", $to);
+if (!empty($cat)) {
+    $this->db->where('e.categoryid', (int)$cat);
+}
 
-    if ($cat != "")
-        $this->db->where("c.category", $cat);
-
-    $this->db->order_by("e.expdate", "ASC");
+    $this->db->order_by('e.expdate','ASC');
     return $this->db->get()->result();
 }
 
+public function user_has_any_location($user_id, $company_id)
+{
+    return $this->db
+        ->where('tbl_res_user_idtbl_res_user', (int)$user_id)
+        ->where('tbl_company_idtbl_company', (int)$company_id)
+        ->where('status', 1)
+        ->count_all_results('tbl_user_location_access') > 0;
+}
 
+
+
+public function can_edit_expense($expense_id, $user_id, $company_id, $branch_id)
+{
+    $this->db->from('tbl_expense e');
+    $this->db->where('e.idtbl_expense', $expense_id);
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
+
+    if ($branch_id === null) {
+        // HO → must have explicit access
+$this->db->where("
+    EXISTS (
+        SELECT 1
+        FROM tbl_user_location_access ula
+        WHERE ula.tbl_res_user_idtbl_res_user = {$this->db->escape($user_id)}
+        AND ula.tbl_company_idtbl_company = e.tbl_company_idtbl_company
+        AND ula.status = 1
+        AND (
+            ula.tbl_company_branch_idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch
+            OR (
+                ula.tbl_company_branch_idtbl_company_branch IS NULL
+                AND e.tbl_company_branch_idtbl_company_branch IS NULL
+            )
+        )
+    )
+", null, false);
+
+
+    } else {
+        // Branch user → same branch only
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
+    }
+
+    return $this->db->count_all_results() === 1;
+}
+
+public function get_manual_expense_secure($id, $user_id, $company_id, $branch_id)
+{
+    $this->db->select('e.*, c.category, b.branch AS branch_name');
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
+
+    $this->db->where('e.idtbl_expense', $id);
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
+$this->db->order_by('e.expdate','ASC');
+
+    if ($branch_id === null) {
+ $this->db->where("
+    EXISTS (
+        SELECT 1
+        FROM tbl_user_location_access ula
+        WHERE ula.tbl_res_user_idtbl_res_user = {$this->db->escape($user_id)}
+        AND ula.tbl_company_idtbl_company = e.tbl_company_idtbl_company
+        AND ula.status = 1
+        AND (
+            ula.tbl_company_branch_idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch
+            OR (
+                ula.tbl_company_branch_idtbl_company_branch IS NULL
+                AND e.tbl_company_branch_idtbl_company_branch IS NULL
+            )
+        )
+    )
+", null, false);
+
+
+    } else {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
+    }
+
+    return $this->db->get()->row();
+    
+}
+
+public function get_daywise_expenses_secure(
+    $from,
+    $to,
+    $user_id,
+    $company_id,
+    $branch_id
+){
+    $this->db->select('
+        e.idtbl_expense,
+        e.categoryid,
+        e.expdate,
+        e.description,
+        e.amount,
+        c.category,
+        b.branch AS branch_name
+    ');
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
+
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
+
+    if ($from) $this->db->where('e.expdate >=', $from);
+    if ($to)   $this->db->where('e.expdate <=', $to);
+
+    if ($branch_id === null) {
+ $this->db->where("
+    EXISTS (
+        SELECT 1
+        FROM tbl_user_location_access ula
+        WHERE ula.tbl_res_user_idtbl_res_user = {$this->db->escape($user_id)}
+        AND ula.tbl_company_idtbl_company = e.tbl_company_idtbl_company
+        AND ula.status = 1
+        AND (
+            ula.tbl_company_branch_idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch
+            OR (
+                ula.tbl_company_branch_idtbl_company_branch IS NULL
+                AND e.tbl_company_branch_idtbl_company_branch IS NULL
+            )
+        )
+    )
+", null, false);
+
+
+    } else {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
+    }
+
+    $this->db->order_by('e.expdate','DESC');
+    return $this->db->get()->result();
+}
+
+public function get_range_expenses_secure(
+    $from,
+    $to,
+    $cat,
+    $user_id,
+    $company_id,
+    $branch_id
+){
+    $this->db->select('
+        e.*,
+        c.category,
+        b.branch AS branch_name
+    ');
+    $this->db->from('tbl_expense e');
+    $this->db->join('tbl_expense_category c','c.idtbl_expense_category = e.categoryid');
+    $this->db->join(
+        'tbl_company_branch b',
+        'b.idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch',
+        'left'
+    );
+
+    $this->db->where('e.tbl_company_idtbl_company', $company_id);
+    $this->db->where('e.status', 1);
+
+    if ($from) $this->db->where('e.expdate >=', $from);
+    if ($to)   $this->db->where('e.expdate <=', $to);
+    if ($cat)  $this->db->where('e.categoryid', (int)$cat);
+
+    if ($branch_id === null) {
+ $this->db->where("
+    EXISTS (
+        SELECT 1
+        FROM tbl_user_location_access ula
+        WHERE ula.tbl_res_user_idtbl_res_user = {$this->db->escape($user_id)}
+        AND ula.tbl_company_idtbl_company = e.tbl_company_idtbl_company
+        AND ula.status = 1
+        AND (
+            ula.tbl_company_branch_idtbl_company_branch = e.tbl_company_branch_idtbl_company_branch
+            OR (
+                ula.tbl_company_branch_idtbl_company_branch IS NULL
+                AND e.tbl_company_branch_idtbl_company_branch IS NULL
+            )
+        )
+    )
+", null, false);
+
+
+    } else {
+        $this->db->where('e.tbl_company_branch_idtbl_company_branch', $branch_id);
+    }
+
+    return $this->db->get()->result();
+}
 
 }

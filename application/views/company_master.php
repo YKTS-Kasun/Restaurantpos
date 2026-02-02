@@ -68,12 +68,12 @@
 </div>
 
 <!-- ================= COMPANY MODAL ================= -->
-<div class="modal fade" id="companyModal" data-backdrop="static">
+<div class="modal fade" id="companyModal" data-bs-backdrop="static">
 <div class="modal-dialog modal-dialog-centered">
 <div class="modal-content">
 <div class="modal-header">
     <h5 class="modal-title">Company</h5>
-    <button class="close" data-dismiss="modal">&times;</button>
+    <buttonclass="btn-close" data-bs-dismiss="modal">&times;</button>
 </div>
 <div class="modal-body">
 <form id="companyForm">
@@ -102,12 +102,12 @@
 </div>
 
 <!-- ================= BRANCH MODAL ================= -->
-<div class="modal fade" id="branchModal" data-backdrop="static">
+<div class="modal fade" id="branchModal" data-bs-backdrop="static">
 <div class="modal-dialog modal-dialog-centered">
 <div class="modal-content">
 <div class="modal-header">
     <h5 class="modal-title">Branch</h5>
-    <button class="close" data-dismiss="modal">&times;</button>
+    <buttonclass="btn-close" data-bs-dismiss="modal">&times;</button>
 </div>
 <div class="modal-body">
 <form id="branchForm">

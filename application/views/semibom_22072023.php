@@ -56,7 +56,7 @@ include "include/topnavbar.php";
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="exampleModalCenterTitle">BOM Details of <label id="procode"></label> </h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -77,7 +77,7 @@ include "include/topnavbar.php";
 
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-outline-primary btn-sm" data-dismiss="modal"><i class="fas fa-times-circle"></i>&nbsp;Close</button>
+				<button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal"><i class="fas fa-times-circle"></i>&nbsp;Close</button>
 			</div>
 		</div>
 	</div>
@@ -119,7 +119,7 @@ include "include/topnavbar.php";
                 </form>
                 </div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-outline-primary btn-sm" data-dismiss="modal"><i
+				<button type="button" class="btn btn-outline-primary btn-sm" data-bs-dismiss="modal"><i
 						class="fas fa-times-circle"></i>&nbsp;Close</button>
 			</div>
 		</div>
@@ -127,13 +127,13 @@ include "include/topnavbar.php";
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">Create BOM</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -192,13 +192,13 @@ include "include/topnavbar.php";
 </div>
 
 <!-- Modal -->
-<div class="modal fade" id="modalviewalldata" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalviewalldata" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="modalviewalldataLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="modalviewalldataLabel">View All BOM</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>

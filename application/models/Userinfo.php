@@ -1,93 +1,49 @@
 <?php
 class Userinfo extends CI_Model{
- public function LoginUser(){
-
-    $username = $this->input->post('username');
-    $password = md5($this->input->post('password'));
-
-$this->db->select('
-    u.*,
-    ut.usertype,
-
-    c.idtbl_company,
-    c.company,
-
-    cb.idtbl_company_branch,
-    cb.branch
-');
-
-
-$this->db->from('tbl_res_user u');
-
-$this->db->join(
-    'tbl_res_user_type ut',
-    'ut.idtbl_res_user_type = u.tbl_res_user_type_idtbl_res_user_type'
-);
-
-$this->db->join(
-    'tbl_company c',
-    'c.idtbl_company = u.tbl_company_idtbl_company',
-    'left'
-);
-
-$this->db->join(
-    'tbl_company_branch cb',
-    'cb.idtbl_company_branch = u.tbl_company_branch_idtbl_company_branch',
-    'left'
-);
-
-    $this->db->where('u.username', $username);
-    $this->db->where('u.password', $password);
-    $this->db->where('u.status', 1);
-
-    $q = $this->db->get();
-
-    if ($q->num_rows() === 1) {
-        return $q->row();
+    public function LoginUser(){
+        $username=$this->input->post('username');
+        $password=md5($this->input->post('password'));
+        
+        $this->db->select('*');
+        $this->db->from('tbl_res_user');
+        $this->db->join('tbl_res_user_type', 'tbl_res_user_type.idtbl_res_user_type = tbl_res_user.tbl_res_user_type_idtbl_res_user_type');
+        $this->db->where('tbl_res_user.username', $username);
+        $this->db->where('tbl_res_user.password', $password);
+        $this->db->where('tbl_res_user.status', 1);
+        
+        $respond=$this->db->get();
+        if($respond->num_rows()==1){            
+            return $respond->row(0);
+        }
+        else{
+            return false; 
+        }
     }
-
-    return false;
-}
-
-
     public function Usertype(){
         $this->db->select('idtbl_res_user_type, usertype');
         $this->db->from('tbl_res_user_type');
 
         return $respond=$this->db->get();
     }
-    
     public function Useraccountedit(){
-    $recordID = $this->input->post('recordID');
+        $recordID=$this->input->post('recordID');
 
-    $q = $this->db
-        ->where('idtbl_res_user', $recordID)
-        ->get('tbl_res_user');
+        $this->db->select('*');
+        $this->db->from('tbl_res_user');
+        $this->db->where('idtbl_res_user', $recordID);
+        $this->db->where('status', 1);
 
-    if ($q->num_rows() == 0) {
-        echo json_encode([]);
-        return;
+        $respond=$this->db->get();
+
+        $obj=new stdClass();
+        $obj->id=$respond->row(0)->idtbl_res_user;
+        $obj->name=$respond->row(0)->name;
+        $obj->username=$respond->row(0)->username;
+        $obj->type=$respond->row(0)->tbl_res_user_type_idtbl_res_user_type;
+
+        echo json_encode($obj);
     }
-
-    $row = $q->row();
-
-    $obj = new stdClass();
-    $obj->id       = $row->idtbl_res_user;
-    $obj->name     = $row->name;
-    $obj->username = $row->username;
-    $obj->type     = $row->tbl_res_user_type_idtbl_res_user_type;
-    $obj->company = $row->tbl_company_idtbl_company;
-$obj->branch  = $row->tbl_company_branch_idtbl_company_branch;
-
-
-    echo json_encode($obj);
-}
-
     public function Useraccountinsertupdate(){
-        $company = $this->input->post('company_id');
-$branch  = $this->input->post('branch_id');
-
-
         $this->db->trans_begin();
 
         $userID=$_SESSION['userid'];
@@ -103,20 +59,14 @@ $branch  = $this->input->post('branch_id');
         $updatedatetime=date('Y-m-d H:i:s');
 
         if($recordOption==1){
-$data = array(
-    'name'      => $accountname,
-    'username'  => $username,
-    'password'  => $password,
-    'status'    => '1',
-    'insertdatetime' => $updatedatetime,
-    'tbl_res_user_type_idtbl_res_user_type' => $usertype,
-
-    // ✅ NEW
-    'tbl_company_idtbl_company' => $company,
-    'tbl_company_branch_idtbl_company_branch' => $branch
-);
-
-
+            $data = array(
+                'name'=>$accountname, 
+                'username'=>$username, 
+                'password'=>$password, 
+                'status'=>'1', 
+                'insertdatetime'=>$updatedatetime, 
+                'tbl_res_user_type_idtbl_res_user_type'=>$usertype
+            );
 
             $this->db->insert('tbl_res_user', $data);
 
@@ -156,38 +106,26 @@ $data = array(
         }
         else{
             if(!empty($this->input->post('password'))){
-$data = array(
-    'name' => $accountname,
-    'username' => $username,
-    'status' => '1',
-    'insertdatetime' => $updatedatetime,
-    'tbl_res_user_type_idtbl_res_user_type' => $usertype,
-    'tbl_company_idtbl_company' => $company,
-    'tbl_company_branch_idtbl_company_branch' => $branch
-);
-
-if(!empty($this->input->post('password'))){
-    $data['password'] = md5($this->input->post('password'));
-}
-
+                $data = array(
+                    'name'=>$accountname, 
+                    'username'=>$username, 
+                    'password'=>$password,
+                    'updateuser'=>$userID, 
+                    'updatedatetime'=>$updatedatetime, 
+                    'tbl_res_user_type_idtbl_res_user_type'=>$usertype
+                );
     
                 $this->db->where('idtbl_res_user', $recordID);
                 $this->db->update('tbl_res_user', $data);
             }
             else{
-$data = array(
-    'name'=>$accountname,
-    'username'=>$username,
-    'updateuser'=>$userID,
-    'updatedatetime'=>$updatedatetime,
-    'tbl_res_user_type_idtbl_res_user_type'=>$usertype,
-
-    // ✅ NEW
-    'tbl_company_idtbl_company'=>$company,
-    'tbl_company_branch_idtbl_company_branch'=>$branch
-);
-
-
+                $data = array(
+                    'name'=>$accountname, 
+                    'username'=>$username, 
+                    'updateuser'=>$userID, 
+                    'updatedatetime'=>$updatedatetime, 
+                    'tbl_res_user_type_idtbl_res_user_type'=>$usertype
+                );
     
                 $this->db->where('idtbl_res_user', $recordID);
                 $this->db->update('tbl_res_user', $data);
@@ -491,7 +429,6 @@ $data = array(
         $recordID=$x;
         $type=$y;
         $updatedatetime=date('Y-m-d H:i:s');
-
         if($type==1){
             $data = array(
                 'status' => '1',

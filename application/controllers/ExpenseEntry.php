@@ -5,209 +5,248 @@ date_default_timezone_set('Asia/Colombo');
 
 class ExpenseEntry extends CI_Controller {
 
-   public function index(){
-    $this->load->model('Commeninfo');
-    $this->load->model('Expense_model', 'expense');
+    protected $user_id;
+    protected $company_id;
+    protected $branch_id;
+    protected $is_ho;
 
-    $result['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
+    public function __construct()
+    {
+        parent::__construct();
 
-    // Filters
-    $filters = [
-        'date_from' => $this->input->get('date_from'),
-        'date_to'   => $this->input->get('date_to'),
-        'category'  => $this->input->get('category'),
-    ];
+        if (!$this->session->userdata('userid')) {
+            redirect('Login');
+        }
 
-    // Keep previous filter values
-    $result['date_from'] = $filters['date_from'];
-    $result['date_to']   = $filters['date_to'];
-    $result['f_category']= $filters['category'];
+        $this->user_id    = (int)$this->session->userdata('userid');
+        $this->company_id = (int)$this->session->userdata('company_id');
+        $this->branch_id  = $this->session->userdata('branch_id'); // NULL = HO
+        $this->is_ho      = is_null($this->branch_id);
 
-    // Data
-    $result['categories'] = $this->expense->get_categories(true);
-    //$result['expenses']   = $this->expense->get_all_expenses($filters);
-$location_type = $this->session->userdata('location_type'); // HO / BRANCH
-$idtbl_location = $this->session->userdata('idtbl_location');
-
-$result['expenses'] = $this->expense->get_daywise_expenses(
-    $filters['date_from'],
-    $filters['date_to'],
-    $location_type,
-    $idtbl_location
-);
-
-
-
-    // DEFAULT: form empty (add)
-    $result['edit_mode'] = false;
-    $result['edit_exp']  = null;
-
-    $this->load->view('expense_entry', $result);
-}
-
-
-    // ============================================================================
-    // ADD OR UPDATE EXPENSE  (Single method)
-    // ============================================================================
-    public function save_or_update(){
-        $this->load->model('Expense_model', 'expense');
         $this->load->model('Commeninfo');
+        $this->load->model('Expense_model', 'expense');
+    }
 
-        $menu = $this->Commeninfo->Getmenuprivilege();
+    /* =====================================================
+       LIST + ADD FORM
+    ===================================================== */
+    public function index()
+    {
+        $data['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
+
+        $filters = [
+            'date_from' => $this->input->get('date_from', true),
+            'date_to'   => $this->input->get('date_to', true),
+            'category'  => $this->input->get('category', true)
+        ];
+
+        $data['date_from']  = $filters['date_from'];
+        $data['date_to']    = $filters['date_to'];
+        $data['f_category'] = $filters['category'];
+
+        $data['categories'] = $this->expense->get_categories(true);
+
+        // ✅ SECURE LIST (HO + Branch safe)
+        $data['expenses'] = $this->expense->get_daywise_expenses_secure(
+            $filters['date_from'],
+            $filters['date_to'],
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        );
+
+        $data['edit_mode'] = false;
+        $data['edit_exp']  = null;
+
+        $this->load->view('expense_entry', $data);
+    }
+
+    /* =====================================================
+       ADD / UPDATE
+    ===================================================== */
+    public function save_or_update()
+    {
+        // ❌ No company/location access at all
+        if (!$this->expense->user_has_any_location($this->user_id, $this->company_id)) {
+            show_error('Unauthorized', 403);
+        }
 
         $id = $this->input->post('id');
 
-$idtbl_location = $this->session->userdata('idtbl_location');
+        $data = [
+            'categoryid'  => (int)$this->input->post('categoryid'),
+            'description' => $this->input->post('description', true),
+            'amount'      => (float)$this->input->post('amount'),
+            'expdate'     => $this->input->post('expdate', true)
+        ];
 
-$data = [
-    'categoryid'     => $this->input->post('categoryid'),
-    'description'    => $this->input->post('description'),
-    'amount'         => $this->input->post('amount'),
-    'expdate'        => $this->input->post('expdate'),
-    'idtbl_location' => $idtbl_location
-];
+        /* ---------------- INSERT ---------------- */
+        if (empty($id)) {
 
-        // ADD NEW
-        if ($id == "" || $id == null)
-        {
+            // ✅ Branch user → must have branch access
+            if (!$this->is_ho) {
+                if (!$this->expense->user_has_any_location(
+                    $this->user_id,
+                    $this->company_id
+                )) {
+                    show_error('Unauthorized', 403);
+                }
+            }
+
             $this->expense->add_manual_expense($data);
-            $this->session->set_flashdata('msg', 'Expense added successfully!');
+            $this->session->set_flashdata('msg', 'Expense added successfully');
+
         }
-        else
-        {
+        /* ---------------- UPDATE ---------------- */
+        else {
+
+            if (!$this->expense->can_edit_expense(
+                $id,
+                $this->user_id,
+                $this->company_id,
+                $this->branch_id
+            )) {
+                show_error('Unauthorized', 403);
+            }
+
             $this->expense->update_manual_expense($id, $data);
-            $this->session->set_flashdata('msg', 'Expense updated successfully!');
+            $this->session->set_flashdata('msg', 'Expense updated successfully');
         }
 
         redirect('ExpenseEntry');
     }
 
-    // ============================================================================
-    // LOAD EXPENSE INTO FORM FOR INLINE EDIT
-    // ============================================================================
+    /* =====================================================
+       LOAD FOR EDIT
+    ===================================================== */
     public function load($id)
     {
-        $this->load->model('Expense_model', 'expense');
-        $this->load->model('Commeninfo');
+        $data['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
 
-        $result['menuaccess'] = $this->Commeninfo->Getmenuprivilege();
+        $exp = $this->expense->get_manual_expense_secure(
+            $id,
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        );
 
-        // Fetch record (manual only)
-$idtbl_location = $this->session->userdata('idtbl_location');
-
-$exp = $this->expense->get_manual_expense($id, $idtbl_location);
-
-
-        if (!$exp){
-            $this->session->set_flashdata('msg', 'Invalid expense record');
-            redirect('ExpenseEntry');
-            return;
+        if (!$exp) {
+            show_error('Expense not found or access denied', 404);
         }
 
-        // Load filters (retain)
         $filters = [
-            'date_from' => $this->input->get('date_from'),
-            'date_to'   => $this->input->get('date_to'),
-            'category'  => $this->input->get('category'),
+            'date_from' => $this->input->get('date_from', true),
+            'date_to'   => $this->input->get('date_to', true),
+            'category'  => $this->input->get('category', true)
         ];
 
-        $result['date_from'] = $filters['date_from'];
-        $result['date_to']   = $filters['date_to'];
-        $result['f_category']= $filters['category'];
+        $data['date_from']  = $filters['date_from'];
+        $data['date_to']    = $filters['date_to'];
+        $data['f_category'] = $filters['category'];
 
-        // Load categories & list
-        $result['categories'] = $this->expense->get_categories(true);
-        $idtbl_location = $this->session->userdata('idtbl_location');
+        $data['categories'] = $this->expense->get_categories(true);
 
-$result['expenses'] = $this->expense->get_daywise_expenses(
-    $filters['date_from'],
-    $filters['date_to'],
-    $idtbl_location
-);
+        $data['expenses'] = $this->expense->get_daywise_expenses_secure(
+            $filters['date_from'],
+            $filters['date_to'],
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        );
 
+        $data['edit_mode'] = true;
+        $data['edit_exp']  = $exp;
 
-        // FORM in Edit Mode
-        $result['edit_mode'] = true;
-        $result['edit_exp']  = $exp;
-
-        $this->load->view('expense_entry', $result);
+        $this->load->view('expense_entry', $data);
     }
 
-    // ============================================================================
-    // DELETE MANUAL EXPENSE
-    // ============================================================================
-    public function delete($id){
-        $this->load->model('Expense_model', 'expense');
-        $this->load->model('Commeninfo');
+    /* =====================================================
+       DELETE
+    ===================================================== */
+    public function delete($id)
+    {
+        if (!$this->expense->can_edit_expense(
+            $id,
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        )) {
+            show_error('Unauthorized', 403);
+        }
 
-        $menu = $this->Commeninfo->Getmenuprivilege();
-        $idtbl_location = $this->session->userdata('idtbl_location');
-
-$this->expense->soft_delete_manual_expense($id, $idtbl_location);
-
+        $this->expense->soft_delete_manual_expense($id);
         $this->session->set_flashdata('msg', 'Expense deleted');
         redirect('ExpenseEntry');
     }
 
-public function pdf($date)
-{
-    $this->load->model('Expense_model', 'expense');
-    $this->load->library('Dpdf');   // loads as $this->dpdf
+    /* =====================================================
+       PDF – DAY (FIXED)
+    ===================================================== */
+    public function pdf($date)
+    {
+        $this->load->library('Dpdf');
 
-    $data['date']  = $date;
-$idtbl_location = $this->session->userdata('idtbl_location');
+        $data['date'] = $date;
 
-$data['items'] = $this->expense->get_day_expenses($date, $idtbl_location);
+        // ✅ FIX: correct secure method
+        $data['items'] = $this->expense->get_daywise_expenses_secure(
+            $date,
+            $date,
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        );
 
+        if (!$data['items']) {
+            echo "No expenses found.";
+            return;
+        }
 
-    if (empty($data['items'])) {
-        echo "No expenses found for this date.";
-        return;
+        $html = $this->load->view('expense_day_pdf', $data, true);
+
+        $this->dpdf->loadHtml($html);
+        $this->dpdf->setPaper('A4', 'portrait');
+        $this->dpdf->render();
+        $this->dpdf->stream("expense-{$date}.pdf", ["Attachment" => false]);
     }
 
-    $html = $this->load->view('expense_day_pdf', $data, TRUE);
+    /* =====================================================
+       PDF – RANGE
+    ===================================================== */
+    public function pdf_range()
+    {
+        $from = $this->input->get('from', true);
+        $to   = $this->input->get('to', true);
+        $cat  = $this->input->get('cat', true);
 
-    $this->dpdf->loadHtml($html);
-    $this->dpdf->setPaper('A4', 'portrait');
-    $this->dpdf->render();
-    $this->dpdf->stream("expense-".$date.".pdf", ["Attachment" => false]);
-}
+        $this->load->library('Dpdf');
 
-public function pdf_range()
-{
-    $from = $this->input->get('from');
-    $to   = $this->input->get('to');
-    $cat  = $this->input->get('cat');
+        $data['from'] = $from;
+        $data['to']   = $to;
+        $data['cat']  = $cat;
 
-    $this->load->model('Expense_model', 'expense');
-    $this->load->library('Dpdf');
+        $data['items'] = $this->expense->get_range_expenses_secure(
+            $from,
+            $to,
+            $cat,
+            $this->user_id,
+            $this->company_id,
+            $this->branch_id
+        );
 
-    $data['from'] = $from;
-    $data['to']   = $to;
-    $data['cat']  = $cat;
+        if (!$data['items']) {
+            echo "No records found!";
+            return;
+        }
 
-$idtbl_location = $this->session->userdata('idtbl_location');
+        $html = $this->load->view('expense_range_pdf', $data, true);
 
-$data['items'] = $this->expense->get_range_expenses(
-    $from,
-    $to,
-    $cat,
-    $idtbl_location
-);
-
-
-    if(empty($data['items'])){
-        echo "No records found!";
-        return;
+        $this->dpdf->loadHtml($html);
+        $this->dpdf->setPaper('A4', 'portrait');
+        $this->dpdf->render();
+        $this->dpdf->stream(
+            "expense-report-{$from}-to-{$to}.pdf",
+            ["Attachment" => false]
+        );
     }
-
-    $html = $this->load->view('expense_range_pdf', $data, TRUE);
-
-    $this->dpdf->loadHtml($html);
-    $this->dpdf->setPaper('A4', 'portrait');
-    $this->dpdf->render();
-    $this->dpdf->stream("expense-report-{$from}-to-{$to}.pdf", ["Attachment" => false]);
-}
-
-
 }

@@ -97,13 +97,13 @@ include "include/topnavbar.php";
     </div>
 </div>
 <!-- Modal -->
-<div class="modal fade" id="pordereditmodal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="pordereditmodal" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-sm">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">Add Discount</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -162,7 +162,7 @@ include "include/topnavbar.php";
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="exampleModalScrollableTitle">View Invoice List</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>

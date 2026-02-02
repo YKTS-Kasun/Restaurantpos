@@ -6,74 +6,87 @@ $table = 'tbl_stock_transfer';
 $primaryKey = 'idtbl_stock_transfer';
 
 /* ==============================
-   COLUMNS (ALIAS MUST MATCH!)
+   COLUMNS
 ============================== */
 $columns = [
     ['db'=>'st.idtbl_stock_transfer', 'dt'=>'idtbl_stock_transfer', 'field'=>'idtbl_stock_transfer'],
     ['db'=>'st.transfer_date',        'dt'=>'transfer_date',        'field'=>'transfer_date'],
     ['db'=>'st.transfer_no',          'dt'=>'transfer_no',          'field'=>'transfer_no'],
-    ['db'=>'lf.location_name AS from_loc', 'dt'=>'from_loc', 'field'=>'from_loc'],
-    ['db'=>'lt.location_name AS to_loc',   'dt'=>'to_loc',   'field'=>'to_loc'],
-    ['db'=>'st.status',               'dt'=>'status',               'field'=>'status'],
+    ['db'=>'cb_from.branch AS from_loc', 'dt'=>'from_loc', 'field'=>'from_loc'],
+    ['db'=>'cb_to.branch AS to_loc',     'dt'=>'to_loc',   'field'=>'to_loc'],
+    ['db'=>'st.status',               'dt'=>'status',     'field'=>'status'],
 ];
 
 require('config.php');
 require('ssp.customized.class.php');
 
 $sql_details = [
-    'user'=>$db_username,
-    'pass'=>$db_password,
-    'db'=>$db_name,
-    'host'=>$db_host
+    'user' => $db_username,
+    'pass' => $db_password,
+    'db'   => $db_name,
+    'host' => $db_host
 ];
 
 /* ==============================
-   AJAX FILTER (NOT SESSION)
+   USER CONTEXT (FROM POST)
 ============================== */
-$user_location      = isset($_POST['location_id']) ? (int)$_POST['location_id'] : 0;
-$user_location_type = $_POST['location_type'] ?? '';
+$user_company_id = isset($_POST['company_id']) ? (int)$_POST['company_id'] : 0;
+$user_branch_id  = isset($_POST['branch_id']) && $_POST['branch_id'] !== ''
+    ? (int)$_POST['branch_id']
+    : null;
 
 /* ==============================
    JOIN QUERY
 ============================== */
 $joinQuery = "
 FROM tbl_stock_transfer st
-LEFT JOIN tbl_location lf ON lf.idtbl_location = st.from_location_id
-LEFT JOIN tbl_location lt ON lt.idtbl_location = st.to_location_id
+LEFT JOIN tbl_company_branch cb_from
+    ON cb_from.idtbl_company_branch = st.from_branch_id
+LEFT JOIN tbl_company_branch cb_to
+    ON cb_to.idtbl_company_branch   = st.to_branch_id
 ";
 
 /* ==============================
-   WHERE BASE
+   BASE WHERE
 ============================== */
-$extraWhere = "st.status IN ('PENDING','APPROVED','REJECTED','RECEIVED')";
+$extraWhere = "
+    st.status IN ('PENDING','APPROVED','REJECTED','RECEIVED')
+";
 
 /* ==============================
-   🔐 ACCESS RULES
+   🔐 ACCESS RULES (FINAL)
 ============================== */
 
 /**
- * HO USER
- * - Can see ALL transfers
+ * 🏢 HEAD OFFICE USER
+ * - branch_id = NULL
+ * - Can approve / reject
+ * - See ONLY company-origin transfers
  */
-if ($user_location_type === 'HO') {
-    // no filter
+if ($user_branch_id === null) {
+
+    if ($user_company_id > 0) {
+        $extraWhere .= "
+            AND st.from_company_id = {$user_company_id}
+        ";
+    }
 }
 
+
 /**
- * BRANCH USER
- * - ONLY transfers CREATED FROM own branch
+ * 🏬 BRANCH USER
+ * - See ONLY transfers FROM own branch
  */
-elseif ($user_location_type === 'BRANCH' && $user_location > 0) {
+else {
 
     $extraWhere .= "
-        AND st.from_location_type = 'BRANCH'
-        AND st.from_location_id   = {$user_location}
+        AND st.from_branch_id = {$user_branch_id}
     ";
 }
 
-
-/* HO → no filter */
-
+/* ==============================
+   OUTPUT
+============================== */
 echo json_encode(
     SSP::simple(
         $_POST,
@@ -85,3 +98,4 @@ echo json_encode(
         $extraWhere
     )
 );
+exit;

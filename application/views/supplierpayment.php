@@ -93,7 +93,7 @@ include "include/topnavbar.php";
         <div class="modal-content bg-light">
             <div class="modal-header p-0 p-2">
                 <h5 class="modal-title" id="oLevelTitle">Issue Payment Receipt</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -201,7 +201,7 @@ include "include/topnavbar.php";
         <div class="modal-content bg-light">
         <div class="modal-header p-0 p-2">
                 <h5 class="modal-title" id="titlePaymentView">Payment Receipt / Invoice View & Print</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -230,7 +230,7 @@ include "include/topnavbar.php";
                 <div class="row">
                     <div class="col" id="bodyAlert"></div>
                 </div>
-                <button type="button" class="btn btn-outline-light btn-sm fa-pull-right pl-4 pr-4" data-dismiss="modal">OK</button>
+                <button type="button" class="btn btn-outline-light btn-sm fa-pull-right pl-4 pr-4" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>

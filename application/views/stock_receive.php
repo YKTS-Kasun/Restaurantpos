@@ -76,7 +76,7 @@ include "include/topnavbar.php";
                 <h5 class="modal-title">
                     <i class="fas fa-box"></i> Receive Stock
                 </h5>
-                <button class="close" data-dismiss="modal">
+                <buttonclass="btn-close" data-bs-dismiss="modal">
                     <span>&times;</span>
                 </button>
             </div>
@@ -86,7 +86,7 @@ include "include/topnavbar.php";
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-dismiss="modal">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                     Cancel
                 </button>
                 <button class="btn btn-success btn-sm" id="btnConfirmReceive">
@@ -109,10 +109,16 @@ $('#dataTable').DataTable({
     processing: true,
     serverSide: true,
     order:[[1,'desc']],
+    
     ajax:{
-        url:"<?= base_url() ?>scripts/stockreceivelist.php",
-        type:"POST"
-    },
+    url:"<?= base_url() ?>scripts/stockreceivelist.php",
+    type:"POST",
+    data:function(d){
+        d.company_id = "<?= $this->session->userdata('company_id') ?>";
+        d.branch_id  = "<?= $this->session->userdata('branch_id') ?>";
+    }
+},
+
     columns:[
         {
             data:null,

@@ -136,13 +136,13 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Qty -->
-<div class="modal fade" id="modalqty" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modalqty" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-sm">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="staticBackdropLabel">ADD TO LIST</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -201,12 +201,12 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Modal Table -->
-<div class="modal fade" id="modaltable" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+<div class="modal fade" id="modaltable" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-l">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title" id="staticBackdropLabel">Select the Table</h3>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -224,13 +224,13 @@ include "include/topnavbar.php";
 </div>
 
 <!-- Modal Table Category -->
-<div class="modal fade" id="modaltablecat" data-backdrop="static" data-keyboard="false" tabindex="-1"
+<div class="modal fade" id="modaltablecat" data-bs-backdrop="static" data-keyboard="false" tabindex="-1"
 	aria-labelledby="staticBackdropLabel" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered modal-l">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h3 class="modal-title" id="staticBackdropLabel">Select the Table Category</h3>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 					<span aria-hidden="true">&times;</span>
 				</button>
 			</div>
@@ -265,12 +265,12 @@ include "include/topnavbar.php";
 	</div>
 </div>
 <!-- Reject Reason Modal -->
-<div class="modal fade" id="rejectReasonModal" tabindex="-1" data-backdrop="static" data-keyboard="false" role="dialog" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
+<div class="modal fade" id="rejectReasonModal" tabindex="-1" data-bs-backdrop="static" data-keyboard="false" role="dialog" aria-labelledby="rejectReasonModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="rejectReasonModalLabel">Cancel Reason</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <button type="button"class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -284,7 +284,7 @@ include "include/topnavbar.php";
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" id="confirmReject">Submit</button>
             </div>
         </div>
@@ -924,7 +924,7 @@ $(document).ready(function () {
             onClosed: null,
             icon_type: 'class',
             template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert alert-{0}" role="alert">' +
-                '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
+                '<button type="button" aria-hidden="true"class="btn-close" data-notify="dismiss">×</button>' +
                 '<span data-notify="icon"></span> ' +
                 '<span data-notify="title">{1}</span> ' +
                 '<span data-notify="message">{2}</span>' +
